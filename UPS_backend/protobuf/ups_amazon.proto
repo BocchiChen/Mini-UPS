@@ -13,7 +13,7 @@ message UAConnected{
 message PackageInfo{
   required int64 packageid = 1;
   required string status = 2;
-  optional string name = 3
+  optional string name = 3;
   optional int32 count = 4;
   optional string owner = 5;
 }
