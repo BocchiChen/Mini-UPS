@@ -1,0 +1,13 @@
+version: '2'
+
+services:
+  db:
+    image: postgres
+  ups:
+    build: ./UPS_backend
+    user: nobody
+    command: bash -c "python3 ./main.py"
+    expose:
+      - "8000"
+    depends_on:
+      - db
