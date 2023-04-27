@@ -156,9 +156,7 @@ def getWorldSeqnum():
 def AOrderHandler(dbconn, deal):
   try:
     #get basic information
-    userid = None
-    if deal.userid is not None:
-      userid = deal.userid
+    userid = deal.userid
     packageid = deal.order.id
     description = deal.order.description
     count = deal.order.count
@@ -177,7 +175,7 @@ def AOrderHandler(dbconn, deal):
     cur = dbconn.cursor()
     
     #insert order
-    if userid is None:
+    if userid == "":
       query = "INSERT INTO packages (PACKAGE_ID, STATUS, DESCRIPTION, COUNT, DESTINATION_X, DESTINATION_Y, WAREHOUSE_ID, SHIP_ID, USER_ID, TRUCK_ID) " 
       + "VALUES (" + packageid + ", 'created', '" + description + "', " + count + ", " + dst_x + ", " + dst_y + ", " + whid + ", " + shipid + ", NULL, -1);"
       cur.execute(query)
