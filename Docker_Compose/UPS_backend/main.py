@@ -21,19 +21,21 @@ if __name__ == "__main__":
     fdset = [world_socket, amazon_socket]
   
     while True:
-      rl, rl, error = select.select(fdset, [], [])
+      rl, wl, error = select.select(fdset, [], [])
       if len(rl) != 0:
         for fd in rl:
           if fd is world_socket:
             world.worldRespRouter()
           else:
             amazon.amazonRespRouter()
+            
     world_socket.close()
     amazon_socket.close()
-
   except Exception as e:
     print(e)
   finally:
-    world_socket.close()
-    amazon_socket.close()
+    if world_socket:
+      world_socket.close()
+    if amazon_socket:
+      amazon_socket.close()
   
