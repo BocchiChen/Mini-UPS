@@ -11,7 +11,7 @@ import database
 import amazon
 
 #world settings
-WORLD_HOST = 'vcm-30507.vm.duke.edu'
+WORLD_HOST = 'localhost'
 WORLD_PORT = 12345
 
 #time
@@ -61,7 +61,7 @@ def sayHelloToWorld(truck_num):
       world_id = amazon.getWorldID()
       uconnect.worldid = world_id
     dbconn = database.connectToDB()
-    database.clearDB(dbconn)
+    # database.clearDB(dbconn)
     cur = dbconn.cursor()
     #init and add trucks
     for i in range(0, truck_num):
@@ -69,8 +69,8 @@ def sayHelloToWorld(truck_num):
       truck.id = i
       truck.x = 0
       truck.y = 0
-      query = "INSERT INTO trucks (TRUCK_ID, STATUS, WAREHOUSE_ID, POSITION_X, POSITION_Y) VALUES (" + str(i) + ", 'idle', -1, 0, 0);"
-      cur.execute(query)
+      # query = "INSERT INTO trucks (TRUCK_ID, STATUS, WAREHOUSE_ID, POSITION_X, POSITION_Y) VALUES (" + str(i) + ", 'idle', -1, 0, 0);"
+      # cur.execute(query)
     database.commitAndClose(dbconn, cur)
     
     #send init message to world and receive message
@@ -148,11 +148,11 @@ def UCompletionHandler(dbconn, completion):
 
     print(status)
     
-    if status == "idle":
+    if status == "IDLE":
       query = "UPDATE trucks SET STATUS = 'idle' AND POSITION_X = " + str(x) + " AND POSITION_Y = " + str(y) + " WHERE TRUCK_ID = " + str(truckid) + ";"
       cur.execute(query)
       
-    elif status == "arrive warehouse":
+    else:
       query = "UPDATE trucks SET STATUS = 'arrive_warehouse' AND POSITION_X = " + str(x) + " AND POSITION_Y = " + str(y) + " WHERE TRUCK_ID = " + str(truckid) + ";"
       cur.execute(query)      
       
@@ -248,7 +248,7 @@ def UTruckStatusHandler(dbconn, truckstatus):
     cur = dbconn.cursor()
     
     #update truck status
-    query = "UPDATE trucks SET STATUS = '" + str(status) + "' AND POSITION_X = " + str(x) + " AND POSITION_Y = " + str(y) + " WHERE TRUCK_ID = " + str(truckid) + ";"
+    query = "UPDATE trucks SET STATUS = '" + str(status).lower() + "' AND POSITION_X = " + str(x) + " AND POSITION_Y = " + str(y) + " WHERE TRUCK_ID = " + str(truckid) + ";"
     cur.execute(query)
     
     dbconn.commit()

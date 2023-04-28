@@ -32,8 +32,8 @@ services:
     command: bash -c "python3 ./main.py"
     volumes:
       - ./UPS_backend:/code
-    expose:
-      - "9000"
+    ports:
+      - "34567:34567"
     depends_on:
       - db
   nginx:

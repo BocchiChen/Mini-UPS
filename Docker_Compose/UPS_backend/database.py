@@ -7,7 +7,7 @@ mutex = threading.Lock()
 def connectToDB():
   try:
     conn = psycopg2.connect(
-    host = 'db',
+    host = 'localhost',
     port = 5432,
     database = 'postgres',
     user = 'postgres',
@@ -20,9 +20,9 @@ def connectToDB():
 def clearDB(conn):
   try:
     cur = conn.cursor()
-    cur.execute("DELETE FROM upsaccount;")
+    # cur.execute("DELETE FROM upsaccount;")
     cur.execute("DELETE FROM trucks;")
-    cur.execute("DELETE FROM packages;")
+    # cur.execute("DELETE FROM packages;")
     conn.commit()
     cur.close()
   except Exception as e:

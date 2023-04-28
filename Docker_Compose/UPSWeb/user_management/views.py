@@ -108,22 +108,27 @@ def view_all_packages(request):
 
 @login_required
 def edit_package_desination(request, nid):
-    if request.method == "POST":
-        form = PackageEditForm(request.POST)
-        if form.is_valid():
-            old_package = Package_Info.objects.get(package_id=nid)
-            old_package.destination_x = form.cleaned_data["destination_x"]
-            old_package.destination_y = form.cleaned_data["destination_y"]
-            old_package.save()
-            backend_soc = connectToBackEndServer()
-            msg = f'{old_package.package_id}, {old_package.destination_x}, {old_package.destination_y}'
-            sendAddrMSgToBackEnd(backend_soc, msg)
-            backend_soc.close()
-            return redirect('view_all_packages')
+    try: 
+        if request.method == "POST":
+            form = PackageEditForm(request.POST)
+            if form.is_valid():
+                old_package = Package_Info.objects.get(package_id=nid)
+                old_package.destination_x = form.cleaned_data["destination_x"]
+                old_package.destination_y = form.cleaned_data["destination_y"]
+                old_package.save()
+                backend_soc = connectToBackEndServer()
+                msg = f'{old_package.package_id}, {old_package.destination_x}, {old_package.destination_y}'
+                sendAddrMSgToBackEnd(backend_soc, msg)
+                backend_soc.close()
+                return redirect('view_all_packages')
 
-    package = Package_Info.objects.get(package_id=nid)
-    form = PackageEditForm(instance=package)
-    return render(request, 'edit_package_destination.html', {'form' : form})
+        package = Package_Info.objects.get(package_id=nid)
+        form = PackageEditForm(instance=package)
+        return render(request, 'edit_package_destination.html', {'form' : form})
+    except Exception as e:
+        messages.error(request, e)
+        # print(e)
+        return redirect('view_all_packages')
 
 @login_required
 def view_package_detail(request, nid):
@@ -136,15 +141,20 @@ def view_package_detail(request, nid):
 
 @login_required
 def check_package_position(request, nid):
-    package = Package_Info.objects.get(package_id=nid)
-    truck = Truck.objects.get(truck_id=package.truck.truck_id)
-    backend_soc = connectToBackEndServer()
-    msg = str(truck.truck_id)
-    sendTruckIdMsgToBackEnd(backend_soc, msg)
-    backend_soc.close()
-    truck = Truck.objects.get(truck_id=package.truck.truck_id)
-    context = {'package' : package, 'truck' : truck}
-    return render(request, "check_package_position.html", context)
+    try:
+        package = Package_Info.objects.get(package_id=nid)
+        truck = Truck.objects.get(truck_id=package.truck.truck_id)
+        backend_soc = connectToBackEndServer()
+        msg = str(truck.truck_id)
+        sendTruckIdMsgToBackEnd(backend_soc, msg)
+        backend_soc.close()
+        truck = Truck.objects.get(truck_id=package.truck.truck_id)
+        context = {'package' : package, 'truck' : truck}
+        return render(request, "check_package_position.html", context)
+    except Exception as e:
+        messages.error(request, e)
+        # print(e)
+        return redirect('view_all_packages')
 
 
 """ 
@@ -156,22 +166,27 @@ def guestHomePage(request):
     return render(request, 'guest_home.html')
 
 def guest_edit_package_desination(request, nid):
-    if request.method == "POST":
-        form = PackageEditForm(request.POST)
-        if form.is_valid():
-            old_package = Package_Info.objects.get(package_id=nid)
-            old_package.destination_x = form.cleaned_data["destination_x"]
-            old_package.destination_y = form.cleaned_data["destination_y"]
-            old_package.save()
-            backend_soc = connectToBackEndServer()
-            msg = f'{old_package.package_id}, {old_package.destination_x}, {old_package.destination_y}'
-            sendAddrMSgToBackEnd(backend_soc, msg)
-            backend_soc.close()
-            return redirect('guest_view_all_packages')
+    try:
+        if request.method == "POST":
+            form = PackageEditForm(request.POST)
+            if form.is_valid():
+                old_package = Package_Info.objects.get(package_id=nid)
+                old_package.destination_x = form.cleaned_data["destination_x"]
+                old_package.destination_y = form.cleaned_data["destination_y"]
+                old_package.save()
+                backend_soc = connectToBackEndServer()
+                msg = f'{old_package.package_id}, {old_package.destination_x}, {old_package.destination_y}'
+                sendAddrMSgToBackEnd(backend_soc, msg)
+                backend_soc.close()
+                return redirect('guest_view_all_packages')
 
-    package = Package_Info.objects.get(package_id=nid)
-    form = PackageEditForm(instance=package)
-    return render(request, 'guest_edit_package_destination.html', {'form' : form})
+        package = Package_Info.objects.get(package_id=nid)
+        form = PackageEditForm(instance=package)
+        return render(request, 'guest_edit_package_destination.html', {'form' : form})
+    except Exception as e:
+        messages.error(request, e)
+        # print(e)
+        return redirect('guest_view_all_packages')
         
 def guest_view_all_packages(request):
     try:
@@ -196,12 +211,17 @@ def guest_view_package_detail(request, nid):
     return render(request, "guest_view_package_detail.html", context)
 
 def guest_check_package_position(request, nid):
-    package = Package_Info.objects.get(package_id=nid)
-    truck = Truck.objects.get(truck_id=package.truck.truck_id)
-    backend_soc = connectToBackEndServer()
-    msg = str(truck.truck_id)
-    sendTruckIdMsgToBackEnd(backend_soc, msg)
-    backend_soc.close()
-    truck = Truck.objects.get(truck_id=package.truck.truck_id)
-    context = {'package' : package, 'truck' : truck}
-    return render(request, "guest_check_package_position.html", context)
+    try:
+        package = Package_Info.objects.get(package_id=nid)
+        truck = Truck.objects.get(truck_id=package.truck.truck_id)
+        backend_soc = connectToBackEndServer()
+        msg = str(truck.truck_id)
+        sendTruckIdMsgToBackEnd(backend_soc, msg)
+        backend_soc.close()
+        truck = Truck.objects.get(truck_id=package.truck.truck_id)
+        context = {'package' : package, 'truck' : truck}
+        return render(request, "guest_check_package_position.html", context)
+    except Exception as e:
+        messages.error(request, e)
+        # print(e)
+        return redirect('guest_view_all_packages')

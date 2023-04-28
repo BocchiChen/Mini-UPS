@@ -19,7 +19,7 @@
     <li class="list-group-item">Destination X & Y: <strong>{{ package.destination_x }}, {{ package.destination_y }}</strong></li>
     <li class="list-group-item">WareHouse ID: <strong>{{ package.warehouse_id }}</strong></li>
     <li class="list-group-item">Description: <strong>{{ package.description }}</strong></li>
-    {% if package.status != "delivered" and package.status != "out_for_delivery" %}
+    {% if package.status != "delivered" %}
     <a href="/user/{{ package.package_id }}/edit_package_destination/"><button type="button" class="btn btn-info">Edit Destination</button></a>
     {% endif %}
     {% if package.status == "out_for_delivery" %}

@@ -306,7 +306,7 @@ def AUpdateTStatusHandler(dbconn, updatestatus):
     cur = dbconn.cursor()
     
     #update truck status
-    query = "UPDATE trucks SET STATUS = '" + str(status) + "' WHERE TRUCK_ID = " + str(truckid) + ";"
+    query = "UPDATE trucks SET STATUS = '" + str(status).lower() + "' WHERE TRUCK_ID = " + str(truckid) + ";"
     cur.execute(query)
     
     #update package status
