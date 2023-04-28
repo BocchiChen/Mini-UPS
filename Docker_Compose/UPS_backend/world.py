@@ -281,15 +281,19 @@ def worldRespRouter():
     uresponses = recvWResponse()
     dbconn = database.connectToDB()
     for completion in uresponses.completions:
-      task = executor.submit(UCompletionHandler(dbconn, completion))
+      args = [dbconn, completion]
+      task = executor.submit(lambda p: UCompletionHandler(*p),args)
     for delivered in uresponses.delivered:
-      task = executor.submit(UDeliveredHandler(dbconn, delivered))
+      args = [dbconn, delivered]
+      task = executor.submit(lambda p: UDeliveredHandler(*p),args)
     for ack in uresponses.acks:
       ackset.add(ack)
     for truckstatus in uresponses.truckstatus:
-      task = executor.submit(UTruckStatusHandler(dbconn, truckstatus))
+      args = [dbconn, truckstatus]
+      task = executor.submit(lambda p: UTruckStatusHandler(*p),args)
     for error in uresponses.error:
-      task = executor.submit(UErrHandler(dbconn, error))
+      args = [dbconn, error]
+      task = executor.submit(lambda p: UErrHandler(*p),args)
     dbconn.close()
   except Exception as e:
     print(e)
