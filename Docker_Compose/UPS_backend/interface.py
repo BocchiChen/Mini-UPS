@@ -33,14 +33,14 @@ def acceptFConnection():
     sock.listen(BACK_LOG)
     while True:
       conn_socket, address = sock.accept()
-      print("Receive front connection from: ", address)
+      print("Received front connection from: ", address)
       msg = conn_socket.recv(MAX_MSG_LEN).decode()
       lt = msg.split(',')
       print(lt)
       if len(lt) == 3:
-        task = executor.submit(AUpdatePackageAddress(lt[0], lt[1], lt[2]))
+        task = executor.submit(AUpdatePackageAddress(int(lt[0]), int(lt[1]), int(lt[2])))
       else:
-        task = executor.submit(UQueryTruckStatus(lt[0]))
+        task = executor.submit(UQueryTruckStatus(int(lt[0])))
   except Exception as e:
     print("Error occurs while creating and binding to the listening address: ", e)
 
@@ -65,7 +65,7 @@ def AUpdatePackageAddress(shipid, dst_x, dst_y):
   except Exception as e:
     print(e)
 
-#@interface (send package address to amazon)
+#@interface (send truck status to world)
 def UQueryTruckStatus(truckid):
   try:
     ucommands = world_ups_pb2.UCommands()
@@ -83,5 +83,7 @@ def UQueryTruckStatus(truckid):
       
   except Exception as e:
     print(e)
+      
+  
       
   
