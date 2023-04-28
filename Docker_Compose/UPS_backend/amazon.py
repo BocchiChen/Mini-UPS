@@ -434,15 +434,20 @@ def amazonRespRouter():
     au_messages = recvAResponse()
     dbconn = database.connectToDB()
     for deal in au_messages.order:
-      task = executor.submit(AOrderHandler(dbconn, deal))
+      args = [dbconn, deal]
+      task = executor.submit(lambda p: AOrderHandler(*p),args)
     for assuserid in au_messages.associateUserId:
-      task = executor.submit(AAssociateIDHandler(dbconn, assuserid))
+      args = [dbconn, assuserid]
+      task = executor.submit(lambda p: AAssociateIDHandler(*p),args)
     for calltruck in au_messages.callTruck:
-      task = executor.submit(AScheduleTruckHandler(dbconn, calltruck))
+      args = [dbconn, calltruck]
+      task = executor.submit(lambda p: AScheduleTruckHandler(*p),args)
     for updatestatus in au_messages.updateTruckStatus:
-      task = executor.submit(AUpdateTStatusHandler(dbconn, updatestatus))
+      args = [dbconn, updatestatus]
+      task = executor.submit(lambda p: AUpdateTStatusHandler(*p),args)
     for godeliver in au_messages.truckGoDeliver:
-      task = executor.submit(ATruckGoDeliverHandler(dbconn, godeliver))
+      args = [dbconn, godeliver]
+      task = executor.submit(lambda p: ATruckGoDeliverHandler(*p),args)
     for ack in au_messages.acks:
       aackset.add(ack)
     dbconn.close()
