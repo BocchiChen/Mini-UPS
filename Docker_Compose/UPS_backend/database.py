@@ -20,6 +20,7 @@ def connectToDB():
 def clearDB(conn):
   try:
     cur = conn.cursor()
+    cur.execute("DELETE FROM upsaccount;")
     cur.execute("DELETE FROM trucks;")
     cur.execute("DELETE FROM packages;")
     conn.commit()
