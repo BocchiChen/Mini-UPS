@@ -8,6 +8,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 import world
 import amazon
+import database
 
 #net
 INTERFACE_HOST = 'localhost'
@@ -31,22 +32,51 @@ def acceptFConnection():
     address = (INTERFACE_HOST, INTERFACE_PORT)
     sock.bind(address)
     sock.listen(BACK_LOG)
+    conn = database.connectToDB()
     while True:
       conn_socket, address = sock.accept()
-      print("Receive front connection from: ", address)
+      print("Received front connection from: ", address)
       msg = conn_socket.recv(MAX_MSG_LEN).decode()
       lt = msg.split(',')
       print(lt)
       if len(lt) == 3:
-        task = executor.submit(AUpdatePackageAddress(lt[0], lt[1], lt[2]))
+        task = executor.submit(AUpdatePackageAddress(conn, int(lt[0]), int(lt[1]), int(lt[2])))
       else:
-        task = executor.submit(UQueryTruckStatus(lt[0]))
+        task = executor.submit(UQueryTruckStatus(int(lt[0])))
+      conn_socket.close()
   except Exception as e:
     print("Error occurs while creating and binding to the listening address: ", e)
+  finally:
+    if conn: 
+      conn.close()
 
 #@interface (send package address to amazon)
-def AUpdatePackageAddress(shipid, dst_x, dst_y):
+def AUpdatePackageAddress(conn, shipid, dst_x, dst_y):
   try:
+    cur = conn.cursor()
+    #query the truck id
+    query = "SELECT TRUCK_ID FROM packages WHERE SHIP_ID = " + str(shipid) + ";"
+    cur.execute(query)
+    truckid = cur.fetchone()[0]
+    #notice world to change the destination of package
+    ucommands = world_ups_pb2.UCommands()
+    delivery = ucommands.deliveries.add()
+    delivery.truckid = truckid
+    package = delivery.packages.add()
+    package.packageid = shipid
+    package.x = dst_x
+    package.y = dst_y
+    world_seqnum = amazon.getWorldSeqnum()
+    delivery.seqnum = world_seqnum
+    
+    #send message to world and wait ack
+    ackset = world.getAckSet()
+    while world_seqnum not in ackset:
+      world.sendMsgToWorld(ucommands)
+      time.sleep(TIME_WAIT)
+      ackset = world.getAckSet()
+
+    #notice amazon that the destinatin has been changed
     ua_messages = ups_amazon_pb2.UAMessages()
     pa = ua_messages.updatePackageAddress.add()
     pa.shipid = shipid
@@ -65,7 +95,7 @@ def AUpdatePackageAddress(shipid, dst_x, dst_y):
   except Exception as e:
     print(e)
 
-#@interface (send package address to amazon)
+#@interface (query truck status to world)
 def UQueryTruckStatus(truckid):
   try:
     ucommands = world_ups_pb2.UCommands()

@@ -1,8 +1,6 @@
 import psycopg2
 import threading
 
-mutex = threading.Lock()
-
 #connect to the database
 def connectToDB():
   try:
@@ -20,6 +18,7 @@ def connectToDB():
 def clearDB(conn):
   try:
     cur = conn.cursor()
+    cur.execute("DELETE FROM upsaccount;")
     cur.execute("DELETE FROM trucks;")
     cur.execute("DELETE FROM packages;")
     conn.commit()

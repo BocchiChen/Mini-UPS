@@ -55,7 +55,7 @@ def acceptAConnection():
     sock.bind(address)
     sock.listen(BACK_LOG)
     conn_socket, address = sock.accept()
-    print("Receive amazon connection from: ", address)
+    print("Received amazon connection from: ", address)
     amazon_socket = conn_socket
     sock.close()
     return conn_socket
@@ -178,11 +178,11 @@ def AOrderHandler(dbconn, deal):
     #insert order
     if userid == "":
       query = "INSERT INTO packages (PACKAGE_ID, STATUS, DESCRIPTION, COUNT, DESTINATION_X, DESTINATION_Y, WAREHOUSE_ID, SHIP_ID, USER_ID, TRUCK_ID) " 
-      + "VALUES (" + packageid + ", 'created', '" + description + "', " + count + ", " + dst_x + ", " + dst_y + ", " + whid + ", " + shipid + ", NULL, -1);"
+      + "VALUES (" + str(packageid) + ", 'created', '" + str(description) + "', " + str(count) + ", " + str(dst_x) + ", " + str(dst_y) + ", " + str(whid) + ", " + str(shipid) + ", NULL, -1);"
       cur.execute(query)
     else:
       query = "INSERT INTO packages (PACKAGE_ID, STATUS, DESCRIPTION, COUNT, DESTINATION_X, DESTINATION_Y, WAREHOUSE_ID, SHIP_ID, USER_ID, TRUCK_ID) " 
-      + "VALUES (" + packageid + ", 'created', '" + description + "', " + count + ", " + dst_x + ", " + dst_y + ", " + whid + ", " + shipid + ", '" + userid + "', -1);"
+      + "VALUES (" + str(packageid) + ", 'created', '" + str(description) + "', " + str(count) + ", " + str(dst_x) + ", " + str(dst_y) + ", " + str(whid) + ", " + str(shipid) + ", '" + str(userid) + "', -1);"
       cur.execute(query)
     dbconn.commit()
     print("New Amazon package created in UPS database: " + deal)
@@ -211,16 +211,16 @@ def AAssociateIDHandler(dbconn, assuserid):
     cur = dbconn.cursor()
     
     #if userid exists
-    query = "SELECT UPS_ACCOUNT_NUMBER FROM upsaccount WHERE UPS_ACCOUNT_NUMBER = '" + userid + "';"
+    query = "SELECT UPS_ACCOUNT_NUMBER FROM upsaccount WHERE UPS_ACCOUNT_NUMBER = '" + str(userid) + "';"
     cur.execute(query)
     user = cur.fetchone()
     if user is None:
-      err = "error: cannot find the user id: " + userid
+      err = "error: cannot find the user id: " + str(userid)
       sendErrMsgToAmazon(err, seqnum, getWorldSeqnum())
       return 
     
     #find package and modify its user_id
-    query = "UPDATE packages SET USER_ID = '" + userid + "' WHERE SHIP_ID = " + shipid + ";"
+    query = "UPDATE packages SET USER_ID = '" + str(userid) + "' WHERE SHIP_ID = " + str(shipid) + ";"
     cur.execute(query)
     
     dbconn.commit()
@@ -258,12 +258,12 @@ def AScheduleTruckHandler(dbconn, calltruck):
         if truck is not None:
           truckid = truck[0]
           break
-      query = "UPDATE trucks SET STATUS = 'traveling' AND WAREHOUSE_ID = " + whid + " WHERE TRUCK_ID = " + truckid + ";"
+      query = "UPDATE trucks SET STATUS = 'traveling' AND WAREHOUSE_ID = " + str(whid) + " WHERE TRUCK_ID = " + str(truckid) + ";"
       cur.execute(query)
     
     #add packages belonging to the selected truck
     for shipid in shipids:
-      query = "UPDATE packages SET TRUCK_ID = " + truckid + " AND STATUS = 'truck_en_route_to_warehouse' WHERE SHIP_ID = " + shipid + ";"
+      query = "UPDATE packages SET TRUCK_ID = " + str(truckid) + " AND STATUS = 'truck_en_route_to_warehouse' WHERE SHIP_ID = " + str(shipid) + ";"
       cur.execute(query)
    
     ucommands = world_ups_pb2.UCommands()
@@ -306,20 +306,20 @@ def AUpdateTStatusHandler(dbconn, updatestatus):
     cur = dbconn.cursor()
     
     #update truck status
-    query = "UPDATE trucks SET STATUS = '" + str(status) + "' WHERE TRUCK_ID = " + truckid + ";"
+    query = "UPDATE trucks SET STATUS = '" + str(status) + "' WHERE TRUCK_ID = " + str(truckid) + ";"
     cur.execute(query)
     
     #update package status
-    query = "SELECT SHIP_ID FROM packages WHERE TRUCK_ID = " + truckid + ";"
+    query = "SELECT SHIP_ID FROM packages WHERE TRUCK_ID = " + str(truckid) + ";"
     cur.execute(query)
     ships = cur.fetchall()
     for ship in ships:
       shipid = ship[0]
       if status == "loading":
-        query = "UPDATE packages SET STATUS = 'truck_loading' WHERE SHIP_ID = " + shipid + ";"
+        query = "UPDATE packages SET STATUS = 'truck_loading' WHERE SHIP_ID = " + str(shipid) + ";"
         cur.execute(query)
       else:
-        query = "UPDATE packages SET STATUS = 'truck_loaded' WHERE SHIP_ID = " + shipid + ";"
+        query = "UPDATE packages SET STATUS = 'truck_loaded' WHERE SHIP_ID = " + str(shipid) + ";"
         cur.execute(query)
         
     dbconn.commit()
@@ -348,20 +348,20 @@ def ATruckGoDeliverHandler(dbconn, godeliver):
     cur = dbconn.cursor()
     
     #error message (check valid condition)
-    query = "SELECT TRUCK_ID FROM trucks WHERE TRUCK_ID = " + truckid + " AND (STATUS = 'loaded' OR STATUS = 'delivering');"
+    query = "SELECT TRUCK_ID FROM trucks WHERE TRUCK_ID = " + str(truckid) + " AND (STATUS = 'loaded' OR STATUS = 'delivering');"
     cur.execute(query)
     truck = cur.fetchone()
     if truck is None:
-      err = "error: cannot find the provided available truck: " + truckid
+      err = "error: cannot find the provided available truck: " + str(truckid)
       sendErrMsgToAmazon(err, seqnum, getWorldSeqnum())
       return 
     
     for shipid in shipids:
-      query = "SELECT STATUS FROM packages WHERE SHIP_ID = " + shipid + ";"
+      query = "SELECT STATUS FROM packages WHERE SHIP_ID = " + str(shipid) + ";"
       cur.execute(query)
       pack = cur.fetchone()
       if pack is None or pack[0] != "truck_loaded":
-        err = "error: cannot deliver the provided package: " + shipid
+        err = "error: cannot deliver the provided package: " + str(shipid)
         sendErrMsgToAmazon(err, seqnum, getWorldSeqnum())
         return 
     
@@ -372,7 +372,7 @@ def ATruckGoDeliverHandler(dbconn, godeliver):
     for shipid in shipids: 
       package = delivery.packages.add()
       package.packageid = shipid
-      query = "SELECT DESTINATION_X, DESTINATION_Y FROM packages WHERE SHIPID = " + shipid + ";"
+      query = "SELECT DESTINATION_X, DESTINATION_Y FROM packages WHERE SHIPID = " + str(shipid) + ";"
       cur.execute(query)
       p = cur.fetchone()
       package.x = p[0]
@@ -389,11 +389,11 @@ def ATruckGoDeliverHandler(dbconn, godeliver):
     
     for shipid in shipids:
       #update package status
-      query = "UPDATE packages SET STATUS = 'out_for_delivery' WHERE SHIP_ID = " + shipid + ";"
+      query = "UPDATE packages SET STATUS = 'out_for_delivery' WHERE SHIP_ID = " + str(shipid) + ";"
       cur.execute(query)
     
     #update truck status
-    query = "UPDATE trucks SET STATUS = 'delivering' WHERE TRUCK_ID = " + truckid + ";"
+    query = "UPDATE trucks SET STATUS = 'delivering' WHERE TRUCK_ID = " + str(truckid) + ";"
     cur.execute(query)
     
     #send package update information to amazon
@@ -434,15 +434,20 @@ def amazonRespRouter():
     au_messages = recvAResponse()
     dbconn = database.connectToDB()
     for deal in au_messages.order:
-      task = executor.submit(AOrderHandler(dbconn, deal))
+      args = [dbconn, deal]
+      task = executor.submit(lambda p: AOrderHandler(*p),args)
     for assuserid in au_messages.associateUserId:
-      task = executor.submit(AAssociateIDHandler(dbconn, assuserid))
+      args = [dbconn, assuserid]
+      task = executor.submit(lambda p: AAssociateIDHandler(*p),args)
     for calltruck in au_messages.callTruck:
-      task = executor.submit(AScheduleTruckHandler(dbconn, calltruck))
+      args = [dbconn, calltruck]
+      task = executor.submit(lambda p: AScheduleTruckHandler(*p),args)
     for updatestatus in au_messages.updateTruckStatus:
-      task = executor.submit(AUpdateTStatusHandler(dbconn, updatestatus))
+      args = [dbconn, updatestatus]
+      task = executor.submit(lambda p: AUpdateTStatusHandler(*p),args)
     for godeliver in au_messages.truckGoDeliver:
-      task = executor.submit(ATruckGoDeliverHandler(dbconn, godeliver))
+      args = [dbconn, godeliver]
+      task = executor.submit(lambda p: ATruckGoDeliverHandler(*p),args)
     for ack in au_messages.acks:
       aackset.add(ack)
     dbconn.close()

@@ -69,7 +69,7 @@ def sayHelloToWorld(truck_num):
       truck.id = i
       truck.x = 0
       truck.y = 0
-      query = "INSERT INTO trucks (TRUCK_ID, STATUS, WAREHOUSE_ID, POSITION_X, POSITION_Y) VALUES (" + i + ", 'idle', -1, 0, 0);"
+      query = "INSERT INTO trucks (TRUCK_ID, STATUS, WAREHOUSE_ID, POSITION_X, POSITION_Y) VALUES (" + str(i) + ", 'idle', -1, 0, 0);"
       cur.execute(query)
     database.commitAndClose(dbconn, cur)
     
@@ -145,16 +145,18 @@ def UCompletionHandler(dbconn, completion):
     
     #database cursor
     cur = dbconn.cursor()
+
+    print(status)
     
     if status == "idle":
-      query = "UPDATE trucks SET STATUS = 'idle' AND POSITION_X = " + x + " AND POSITION_Y = " + y + " WHERE TRUCK_ID = " + truckid + ";"
+      query = "UPDATE trucks SET STATUS = 'idle' AND POSITION_X = " + str(x) + " AND POSITION_Y = " + str(y) + " WHERE TRUCK_ID = " + str(truckid) + ";"
       cur.execute(query)
       
     elif status == "arrive warehouse":
-      query = "UPDATE trucks SET STATUS = 'arrive_warehouse' AND POSITION_X = " + x + " AND POSITION_Y = " + y + " WHERE TRUCK_ID = " + truckid + ";"
+      query = "UPDATE trucks SET STATUS = 'arrive_warehouse' AND POSITION_X = " + str(x) + " AND POSITION_Y = " + str(y) + " WHERE TRUCK_ID = " + str(truckid) + ";"
       cur.execute(query)      
       
-      query = "SELECT WAREHOUSE_ID FROM trucks WHERE TRUCK_ID = " + truckid + ";"
+      query = "SELECT WAREHOUSE_ID FROM trucks WHERE TRUCK_ID = " + str(truckid) + ";"
       cur.execute(query)
       whid = cur.fetchone()[0]
       
@@ -198,7 +200,7 @@ def UDeliveredHandler(dbconn, delivered):
     cur = dbconn.cursor()
     
     #update package status
-    query = "UPDATE packages SET STATUS = 'delivered' WHERE PACKAGE_ID = " + packageid + ";"
+    query = "UPDATE packages SET STATUS = 'delivered' WHERE PACKAGE_ID = " + str(packageid) + ";"
     cur.execute(query)
     
     #equip message (##UAMessages)
@@ -246,7 +248,7 @@ def UTruckStatusHandler(dbconn, truckstatus):
     cur = dbconn.cursor()
     
     #update truck status
-    query = "UPDATE trucks SET STATUS = '" + str(status) + "' AND POSITION_X = " + x + " AND POSITION_Y = " + y + " WHERE TRUCK_ID = " + truckid + ";"
+    query = "UPDATE trucks SET STATUS = '" + str(status) + "' AND POSITION_X = " + str(x) + " AND POSITION_Y = " + str(y) + " WHERE TRUCK_ID = " + str(truckid) + ";"
     cur.execute(query)
     
     dbconn.commit()
@@ -279,15 +281,19 @@ def worldRespRouter():
     uresponses = recvWResponse()
     dbconn = database.connectToDB()
     for completion in uresponses.completions:
-      task = executor.submit(UCompletionHandler(dbconn, completion))
+      args = [dbconn, completion]
+      task = executor.submit(lambda p: UCompletionHandler(*p),args)
     for delivered in uresponses.delivered:
-      task = executor.submit(UDeliveredHandler(dbconn, delivered))
+      args = [dbconn, delivered]
+      task = executor.submit(lambda p: UDeliveredHandler(*p),args)
     for ack in uresponses.acks:
       ackset.add(ack)
     for truckstatus in uresponses.truckstatus:
-      task = executor.submit(UTruckStatusHandler(dbconn, truckstatus))
+      args = [dbconn, truckstatus]
+      task = executor.submit(lambda p: UTruckStatusHandler(*p),args)
     for error in uresponses.error:
-      task = executor.submit(UErrHandler(dbconn, error))
+      args = [dbconn, error]
+      task = executor.submit(lambda p: UErrHandler(*p),args)
     dbconn.close()
   except Exception as e:
     print(e)
