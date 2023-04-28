@@ -1,0 +1,60 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="{% static 'plugins/bootstrap-3.4.1/css/bootstrap.min.css' %}">
+    <style>
+        .account {
+            width: 400px;
+            border: 1px solid #dddddd;
+            border-radius: 5px;
+            box-shadow: 5px 5px 20px #aaa;
+
+            margin-left: auto;
+            margin-right: auto;
+            margin-top: 100px;
+            padding: 20px 40px;
+        }
+
+        .account h2 {
+            margin-top: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="account">
+        <h2>Ride Share</h2>
+        <form method="POST" novalidate>
+            {% csrf_token %}
+            <div clas="form-group">
+                <label>Username</label>
+                <input type="text" class="form-control" placeholder="username" name="username">
+            </div>
+            <div clas="form-group">
+                <label>Password</label>
+                <input type="password" class="form-control" placeholder="password" name="password">
+            </div>
+            <p></p>
+            <input type="submit" value="Log in" class="btn btn-primary">
+        </form>
+    </div>
+
+    <h4 align="center">Don't have an account? <span><a href="{% url 'register' %}" class="lbtn btn-primary">Sign up</span></a></h4>
+    <h4 align="center">Visit as Guest <sapn><a href="{% url 'guest_home' %}" class="lbtn btn-primary">Guest Entry</span></a></h4>
+
+    {% for message in messages %}
+        <p class="lead" align="center" style="color:red"><strong>{{message}}</strong></p>
+    {% endfor %}
+
+    <script src="{% static 'js/jquery-3.6.0.min.js' %}"></script>
+    <script src="{% static 'plugins/bootstrap-3.4.1/js/bootstrap.min.js' %}"></script>
+</body>
+
+</html>

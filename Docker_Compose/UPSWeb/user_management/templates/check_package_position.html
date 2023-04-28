@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="panel panel-default">
+    <!-- Default panel contents -->
+    <div class="panel-heading">Package Position</div>
+  
+    <!-- List group -->
+    <ul class="list-group">
+      <li class="list-group-item">Package ID: <strong>{{ package.package_id }}</strong></li>
+      <li class="list-group-item">Position X & Y: <strong>{{ truck.position_x }}, {{ truck.position_y }}</strong></li>
+    </ul>
+  </div>
+{% endblock %}

@@ -1,0 +1,45 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'plugins/bootstrap-3.4.1/css/bootstrap.min.css' %}">
+    <title>Document</title>
+</head>
+
+<body>
+    <h2 align="center">register</h2>
+        <form method="POST" novalidate>
+            {% csrf_token %}
+            <div style="width: 1300px; margin-left: 100px;">
+                {% for field in form %}
+                <div clas="form-group">
+                    <label>{{field.label}}</label>
+                    {% if field.label == 'password1' %}
+                        <label style="color:red;">( Password must be more than 8 characters and contains digits, letters and special symbols! )</label>
+                    {% endif %}
+                    {{field}}
+                    <span style="color: red">{{field.errors.0}}</span>
+                </div>
+                {% endfor %}
+                <p></p>
+                <input type="submit" value="confirm" class="btn btn-primary">
+            </div>
+        </form>
+
+        {% if messages %}
+        {% for message in messages %}
+        <p class="lead" align="center" style="color:red"><strong>{{message}}</strong></p>
+        {% endfor %}
+        {% endif %}
+
+        <h4 style="width: 1300px; margin-left: 100px;">Areadly have an account? <a href="{% url 'login' %}" class="lbtn btn-primary">Log in</span></h4>
+
+        <script src="{% static 'js/jquery-3.6.0.min.js' %}"></script>
+        <script src="{% static 'plugins/bootstrap-3.4.1/js/bootstrap.min.js' %}"></script>
+</body>
+
+</html>

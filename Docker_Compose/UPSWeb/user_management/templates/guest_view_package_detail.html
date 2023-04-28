@@ -1,0 +1,28 @@
+{% extends 'guest_base.html' %}
+
+{% block content %}
+<div class="panel panel-default">
+  <!-- Default panel contents -->
+  <div class="panel-heading">
+    <h4>Package Detail Information</h4>
+    <h1 style="font-size: small"><i>displaying details </i></h1>
+  </div>
+
+  <!-- List group -->
+  <ul class="list-group">
+    <li class="list-group-item">Package ID: <strong>{{ package.package_id }}</strong></li>
+    <li class="list-group-item">Count: <strong>{{ package.count }}</strong></li>
+    <li class="list-group-item">Truck ID: <strong>{{ package.truck.truck_id }}</strong></li>
+    <li class="list-group-item">Status: <strong>{{ package.status }}</strong></li>
+    <li class="list-group-item">Destination X & Y: <strong>{{ package.destination_x }}, {{ package.destination_y }}</strong></li>
+    <li class="list-group-item">WareHouse ID: <strong>{{ package.warehouse_id }}</strong></li>
+    <li class="list-group-item">Description: <strong>{{ package.description }}</strong></li>
+    {% if package.status != "delivered" and package.status != "out_for_delivery" %}
+    <a href="/guest/{{ package.package_id }}/edit_package_destination/"><button type="button" class="btn btn-info">Edit Destination</button></a>
+    {% endif %}
+    {% if package.status == "out_for_delivery" %}
+    <a href="/guest/{{ package.package_id }}/check_package_position/"><button type="button" class="btn btn-info">Check Position</button></a>
+    {% endif %}
+  </ul>
+</div>
+{% endblock %}

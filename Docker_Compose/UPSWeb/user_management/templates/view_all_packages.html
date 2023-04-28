@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+  td, th {
+    text-align: center;
+  }
+</style>  
+
+<div class="panel panel-default">
+  <!-- Default panel contents -->
+  <div class="panel-heading">
+    <h4>Package Information</h4>
+    <h4 style="color: #0c75d2">UPS Account Number: {{ ups_acc.ups_account_number }}</h4>
+    <h4 style="color: cadetblue">Username: {{ request.user.username }}</h4>
+    <h1 style="font-size: small"><i>displaying all packages related with this account</i></h1>
+  </div>
+  <div style="float: right; width: 800px; margin-top: 10px;">
+    <form method="get">
+      <div class="input-group">
+        <input type="text" class="form-control" placeholder="Search for any package id you want..." name="q"
+          value="{{ search_data }}">
+        <span class="input-group-btn">
+          <button class="btn btn-default" type="submit">
+            <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+          </button>
+        </span>
+      </div>
+    </form>
+  </div>
+
+  <!-- List group -->
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>Package ID</th>
+        <th>Status</th>
+        <th>Destination X & Y</th>
+        <th>Operations</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for package in packages %}
+      <tr>
+        <td>{{ package.package_id }}</td>
+        <td>{{ package.status }}</td>
+        <td>{{ package.destination_x }}, {{ package.destination_y }}</td>
+        <td>
+            {% if package.status != "delivered" and package.status != "out_for_delivery" %}
+          <a href="/user/{{ package.package_id }}/edit_package_destination/" class="btn btn-primary active"
+            role="button">Edit Destination</a>
+            {% endif %}
+            {% if package.status == "out_for_delivery" %}
+          <a href="/user/{{ package.package_id }}/check_package_position/" class="btn btn-success active"
+            role="button">Search Position</a>
+            {% endif %}
+          <a href="/user/{{ package.package_id }}/view_package_detail" class="btn btn-info active"
+            role="button">Detail</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
