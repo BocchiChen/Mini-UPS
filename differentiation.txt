@@ -1,0 +1,26 @@
+New Account Registration and User log in:
+	Allow new user to register with their username and password and account number which is the same as amazon account number and specify their email for future communication. Allow old user to log in home page and enjoy member privilege.
+
+
+Guest Entry:
+	Allow those user who does not have time to register to search their specific package.
+
+
+Different Privilege and Page Separation:
+	Member and guest have different privilege and will enter different page. For example, members can evaluate their received packages and can check all related packages while guest cannot evaluate and can only check packages by entering specific package id.
+
+
+User Evaluations:
+	Member can provide valuable feedback and the level of service quality about their received packages. They can also alter and view their previous evaluations in the history evaluations.
+
+
+Display Changeable First name, Last name and Email for Logged-in User:
+	Logged-in users can check their personal profile and change their first name, last name and email any time.
+
+
+Search For Specific Package by Package ID:
+	Logged-in users and guest can search for whatever packages they want by simply entering the corresponding package id to save time.
+
+
+Multi-Threading Processing Requests with ThreadPool:
+	ThreadPool allows us to efficiently process different messages from world and amazon and avoid the serious resource consumption due to unlimited creations of threads at large concurrency.

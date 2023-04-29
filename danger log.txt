@@ -1,0 +1,6 @@
+Uncertain Waiting Time for Unacknowledged Messages:
+	The long waiting time may limit the efficiency of the server while the short waiting time may cause resource consumption.
+
+
+Ungraceful disconnection with Amazon server:
+	Epoll does not gracefully handle the situation when the amazon server disconnects with out UPS server. The corresponding socket will be activated at disconnection.

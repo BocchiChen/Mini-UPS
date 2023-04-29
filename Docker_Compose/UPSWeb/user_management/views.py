@@ -117,7 +117,7 @@ def edit_package_desination(request, nid):
                 old_package.destination_y = form.cleaned_data["destination_y"]
                 old_package.save()
                 backend_soc = connectToBackEndServer()
-                msg = f'{old_package.package_id}, {old_package.destination_x}, {old_package.destination_y}'
+                msg = f'{old_package.package_id},{old_package.destination_x},{old_package.destination_y}'
                 sendAddrMSgToBackEnd(backend_soc, msg)
                 backend_soc.close()
                 return redirect('view_all_packages')
@@ -227,7 +227,7 @@ def guest_edit_package_desination(request, nid):
                 old_package.destination_y = form.cleaned_data["destination_y"]
                 old_package.save()
                 backend_soc = connectToBackEndServer()
-                msg = f'{old_package.package_id}, {old_package.destination_x}, {old_package.destination_y}'
+                msg = f'{old_package.package_id},{old_package.destination_x},{old_package.destination_y}'
                 sendAddrMSgToBackEnd(backend_soc, msg)
                 backend_soc.close()
                 return redirect('guest_view_all_packages')

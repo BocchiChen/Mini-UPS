@@ -37,6 +37,7 @@
         <th>Product Quality</th>
         <th>Delivery Quality</th>
         <th>Description</th>
+        <th>Operations</th>
       </tr>
     </thead>
     <tbody>
@@ -46,6 +47,9 @@
         <td>{{ evaluation.prod_quality }}</td>
         <td>{{ evaluation.delivery_quality }}</td>
         <td>{{ evaluation.description }}</td>
+        <td><a href="/user/{{ evaluation.product.package_id }}/evaluation/" class="btn btn-primary active btn-sm"
+            role="button">Evaluate</a>
+        </td>
       </tr>
       {% endfor %}
     </tbody>
