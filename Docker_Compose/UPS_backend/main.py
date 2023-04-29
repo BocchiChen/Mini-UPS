@@ -30,20 +30,19 @@ if __name__ == "__main__":
       while connect is False:
         connect = world.sayHelloToWorld(TRUCK_NUM)
       '''
-      #select
-      fdset = [world_socket, amazon_socket]
-  
-      while True:
-        rl, wl, error = select.select(fdset, [], [])
-        if len(rl) != 0:
-          for fd in rl:
-            if fd is world_socket:
-              world.worldRespRouter()
-            else:
-              amazon.amazonRespRouter()
-            
-      world_socket.close()
-      amazon_socket.close()
+    #select
+    fdset = [world_socket, amazon_socket]
+    
+    while True:
+      rl, wl, error = select.select(fdset, [], [])
+      if len(rl) != 0:
+        for fd in rl:
+          if fd is world_socket:
+            print("process world socket")
+            world.worldRespRouter(dbconn)
+          else:
+            print("process amazon socket")
+            amazon.amazonRespRouter(dbconn)
     '''
   except Exception as e:
     print(e)
