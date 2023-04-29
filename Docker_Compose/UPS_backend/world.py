@@ -11,7 +11,7 @@ import database
 import amazon
 
 #world settings
-WORLD_HOST = 'localhost'
+WORLD_HOST = 'vcm-30507.vm.duke.edu'
 WORLD_PORT = 12345
 
 #time
@@ -61,7 +61,7 @@ def sayHelloToWorld(truck_num):
       world_id = amazon.getWorldID()
       uconnect.worldid = world_id
     dbconn = database.connectToDB()
-    # database.clearDB(dbconn)
+    database.clearDB(dbconn)
     cur = dbconn.cursor()
     #init and add trucks
     for i in range(0, truck_num):
@@ -69,8 +69,8 @@ def sayHelloToWorld(truck_num):
       truck.id = i
       truck.x = 0
       truck.y = 0
-      # query = "INSERT INTO trucks (TRUCK_ID, STATUS, WAREHOUSE_ID, POSITION_X, POSITION_Y) VALUES (" + str(i) + ", 'idle', -1, 0, 0);"
-      # cur.execute(query)
+      query = "INSERT INTO trucks (TRUCK_ID, STATUS, WAREHOUSE_ID, POSITION_X, POSITION_Y) VALUES (" + str(i) + ", 'idle', -1, 0, 0);"
+      cur.execute(query)
     database.commitAndClose(dbconn, cur)
     
     #send init message to world and receive message
@@ -129,7 +129,7 @@ def getASeqnum():
     return amazon_seqnum - 1
   
 #@thread
-def UCompletionHandler(dbconn, completion):
+def UCompletionHandler(completion):
   try:
     #get basic information
     truckid = completion.truckid
@@ -144,16 +144,17 @@ def UCompletionHandler(dbconn, completion):
       return
     
     #database cursor
+    dbconn = database.connectToDB()
     cur = dbconn.cursor()
 
     print(status)
     
     if status == "IDLE":
-      query = "UPDATE trucks SET STATUS = 'idle' AND POSITION_X = " + str(x) + " AND POSITION_Y = " + str(y) + " WHERE TRUCK_ID = " + str(truckid) + ";"
+      query = "UPDATE trucks SET STATUS = 'idle', POSITION_X = " + str(x) + ", POSITION_Y = " + str(y) + " WHERE TRUCK_ID = " + str(truckid) + ";"
       cur.execute(query)
       
     else:
-      query = "UPDATE trucks SET STATUS = 'arrive_warehouse' AND POSITION_X = " + str(x) + " AND POSITION_Y = " + str(y) + " WHERE TRUCK_ID = " + str(truckid) + ";"
+      query = "UPDATE trucks SET STATUS = 'arrive_warehouse', POSITION_X = " + str(x) + ", POSITION_Y = " + str(y) + " WHERE TRUCK_ID = " + str(truckid) + ";"
       cur.execute(query)      
       
       query = "SELECT WAREHOUSE_ID FROM trucks WHERE TRUCK_ID = " + str(truckid) + ";"
@@ -176,15 +177,20 @@ def UCompletionHandler(dbconn, completion):
       
     dbconn.commit()
     cur.close()
+    dbconn.close()
   except Exception as e:
     try:
-      dbconn.rollback()
+      if dbconn:
+        dbconn.rollback()
     except Exception as rberr:
       print("Error occurs while rolling back the database: ", rberr)
     print("Error occurs while communicating with the world: ", e)
+  finally:
+    if dbconn:
+      dbconn.close()
 
 #@thread
-def UDeliveredHandler(dbconn, delivered):
+def UDeliveredHandler(delivered):
   try:
     #get basic information
     truckid = delivered.truckid
@@ -197,6 +203,7 @@ def UDeliveredHandler(dbconn, delivered):
       return
     
     #database cursor
+    dbconn = database.connectToDB()
     cur = dbconn.cursor()
     
     #update package status
@@ -207,7 +214,7 @@ def UDeliveredHandler(dbconn, delivered):
     ua_messages = ups_amazon_pb2.UAMessages()
     finishedpackage = ua_messages.updatePackageStatus.add()
     finishedpackage.shipid = packageid
-    finishedpackage.status = "delivered"
+    finishedpackage.status = "DELIVERED"
     amazon_seqnum = getASeqnum()
     finishedpackage.seqnum = amazon_seqnum
     
@@ -220,15 +227,20 @@ def UDeliveredHandler(dbconn, delivered):
     
     dbconn.commit()
     cur.close()
+    dbconn.close()
   except Exception as e:
     try:
-      dbconn.rollback()
+      if dbconn:
+        dbconn.rollback()
     except Exception as rberr:
       print("Error occurs while rolling back the database: ", rberr)
     print("Error occurs while communicating with the world: ", e)
+  finally:
+    if dbconn:
+      dbconn.close()
 
 #@thread
-def UTruckStatusHandler(dbconn, truckstatus):
+def UTruckStatusHandler(truckstatus):
   try:
     #get basic information
     truckid = truckstatus.truckid
@@ -245,19 +257,29 @@ def UTruckStatusHandler(dbconn, truckstatus):
     print("The queried truck status is: ", truckstatus)
     
     #database cursor
+    dbconn = database.connectToDB()
     cur = dbconn.cursor()
     
     #update truck status
-    query = "UPDATE trucks SET STATUS = '" + str(status).lower() + "' AND POSITION_X = " + str(x) + " AND POSITION_Y = " + str(y) + " WHERE TRUCK_ID = " + str(truckid) + ";"
+    query = "UPDATE trucks SET STATUS = '" + str(status).lower() + "', POSITION_X = " + str(x) + ", POSITION_Y = " + str(y) + " WHERE TRUCK_ID = " + str(truckid) + ";"
     cur.execute(query)
     
     dbconn.commit()
     cur.close()
+    dbconn.close()
   except Exception as e:
-    print(e)
+    try:
+      if dbconn:
+        dbconn.rollback()
+    except Exception as rberr:
+      print("Error occurs while rolling back the database: ", rberr)
+    print("Error occurs while communicating with the world: ", e)
+  finally:
+    if dbconn:
+      dbconn.close()
     
 #@thread
-def UErrHandler(dbconn, error):
+def UErrHandler(error):
   try:
     #get basic information
     seqnum = error.seqnum
@@ -266,7 +288,6 @@ def UErrHandler(dbconn, error):
     respWorldWithACK(seqnum)
     if checkSeqnum(seqnum):
       return
-         
     print(error)
   except Exception as e:
     print(e)
@@ -279,27 +300,22 @@ def worldRespRouter():
   try: 
     uresponses = world_ups_pb2.UResponses()
     uresponses = recvWResponse()
-    dbconn = database.connectToDB()
     for completion in uresponses.completions:
-      args = [dbconn, completion]
+      args = [completion]
       task = executor.submit(lambda p: UCompletionHandler(*p),args)
     for delivered in uresponses.delivered:
-      args = [dbconn, delivered]
+      args = [delivered]
       task = executor.submit(lambda p: UDeliveredHandler(*p),args)
     for ack in uresponses.acks:
       ackset.add(ack)
     for truckstatus in uresponses.truckstatus:
-      args = [dbconn, truckstatus]
+      args = [truckstatus]
       task = executor.submit(lambda p: UTruckStatusHandler(*p),args)
     for error in uresponses.error:
-      args = [dbconn, error]
+      args = [error]
       task = executor.submit(lambda p: UErrHandler(*p),args)
-    dbconn.close()
   except Exception as e:
     print(e)
-  finally:
-    if dbconn:
-      dbconn.close()
     
 def getAckSet():
   global ackset

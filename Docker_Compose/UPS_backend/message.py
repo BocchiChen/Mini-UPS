@@ -41,6 +41,17 @@ def sendMsg(socket, data):
   socket.sendall(msg)
 
 def recMsg(socket):
+  raw_data_size = b''
+  while True:
+    try:
+        raw_data_size += socket.recv(1)
+        data_size = _DecodeVarint32(raw_data_size, 0)[0]
+        break
+    except IndexError as e:
+        continue
+  raw_data_msg = socket.recv(data_size)
+  return raw_data_msg
+  '''
   try:
     var_int_buff = []
     while True:
@@ -50,8 +61,10 @@ def recMsg(socket):
       if new_pos != 0:
         break
     whole_message = socket.recv(msg_len)
+    print('in revMsg:', whole_message)
     return whole_message
   except:
     whole_message = socket.recv(MAX_MSG_LEN)
     print(whole_message)
+    '''
     

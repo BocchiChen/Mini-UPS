@@ -22,18 +22,17 @@ if __name__ == "__main__":
     connectToFrontend()
 
     print("Starting interacting with world and amazon ...")
-    # amazon_socket = amazon.acceptAConnection() #block
+    amazon_socket = amazon.acceptAConnection() #block
   
-    # while amazon.getWorldID() is None:
-    #   amazon.synchronizeWithAmazon()
+    while amazon.getWorldID() is None:
+      amazon.synchronizeWithAmazon()
     
-    connect = False
-    while connect is False:
-      connect = world.sayHelloToWorld(TRUCK_NUM)
+    # connect = False
+    # while connect is False:
+    #   connect = world.sayHelloToWorld(TRUCK_NUM)
 
     #select
-    fdset = [world_socket]#, amazon_socket]
-  
+    fdset = [world_socket, amazon_socket]
     while True:
       rl, wl, error = select.select(fdset, [], [])
       if len(rl) != 0:
@@ -43,10 +42,9 @@ if __name__ == "__main__":
             world.worldRespRouter()
           else:
             print("process amazon socket")
-            amazon.amazonRespRouter()
-            
+            amazon.amazonRespRouter() 
     world_socket.close()
-    # amazon_socket.close()
+    amazon_socket.close()
   except Exception as e:
     print(e)
   
