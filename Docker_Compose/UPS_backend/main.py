@@ -43,8 +43,9 @@ if __name__ == "__main__":
           else:
             print("process amazon socket")
             amazon.amazonRespRouter() 
-    world_socket.close()
-    amazon_socket.close()
   except Exception as e:
     print(e)
+  finally:
+    world_socket.close()
+    amazon_socket.close()
   
