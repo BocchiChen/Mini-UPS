@@ -56,6 +56,10 @@
             {% endif %}
           <a href="/user/{{ package.package_id }}/view_package_detail" class="btn btn-info active btn-sm"
             role="button">Package Detail</a>
+            {% if package.status == "delivered" %}
+          <a href="/user/{{ package.package_id }}/evaluation/" class="btn btn-success active btn-sm"
+            role="button">Evaluation</a>
+            {% endif %}
         </td>
       </tr>
       {% endfor %}

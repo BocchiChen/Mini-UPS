@@ -34,4 +34,6 @@ urlpatterns = [
     path('user/<int:nid>/view_package_detail/', view_package_detail, name='view_package_detail'),
     path('guest/view_all_packages/', guest_view_all_packages, name='guest_view_all_packages'),
     path('guest/<int:nid>/view_package_detail/', guest_view_package_detail, name='guest_view_package_detail'),
+    path('user/<int:nid>/evaluation/', user_evaluation, name='user_evaluation'),
+    path('user/view_evaluation/', user_view_evaluations, name='user_view_evaluations'),
 ]

@@ -39,10 +39,7 @@ def acceptFConnection():
       msg = conn_socket.recv(MAX_MSG_LEN).decode()
       lt = msg.split(',')
       print(lt)
-      # print(len(lt))
-      # print(type(len(lt)))
       if len(lt) == 3:
-        # print(1)
         args = [conn, int(lt[0]), int(lt[1]), int(lt[2])]
         task = executor.submit(lambda p: AUpdatePackageAddress(*p),args)
       else:
@@ -62,11 +59,11 @@ def AUpdatePackageAddress(conn, shipid, dst_x, dst_y):
     #query the truck id
     query = "SELECT TRUCK_ID, STATUS FROM packages WHERE SHIP_ID = " + str(shipid) + ";"
     cur.execute(query)
-    pac_info = cur.fetchone()
-    truckid = pac_info[0]
-    pac_status = pac_info[1]
-    if pac_status == 'out_for_delivery':
-      #notice world to change the destination of package
+    pack = cur.fetchone()
+    truckid = pack[0]
+    packagestatus = pack[1]
+    if packagestatus == "out_for_delivery":
+    #notice world to change the destination of package !!!!!!!!!!!!!
       ucommands = world_ups_pb2.UCommands()
       delivery = ucommands.deliveries.add()
       delivery.truckid = truckid
@@ -76,14 +73,14 @@ def AUpdatePackageAddress(conn, shipid, dst_x, dst_y):
       package.y = dst_y
       world_seqnum = amazon.getWorldSeqnum()
       delivery.seqnum = world_seqnum
-      
+    
       #send message to world and wait ack
       ackset = world.getAckSet()
       while world_seqnum not in ackset:
         world.sendMsgToWorld(ucommands)
         time.sleep(TIME_WAIT)
         ackset = world.getAckSet()
-      print(ackset)
+      # print(ackset)
 
     #notice amazon that the destinatin has been changed
     ua_messages = ups_amazon_pb2.UAMessages()
@@ -95,14 +92,12 @@ def AUpdatePackageAddress(conn, shipid, dst_x, dst_y):
     pa.seqnum = amazon_seqnum
   
     #send message to amazon
-    # print(ackset)
     aackset = amazon.getAAckSet()
     while amazon_seqnum not in aackset:
       amazon.sendMsgToAmazon(ua_messages) 
       time.sleep(TIME_WAIT)
       aackset = amazon.getAAckSet()
-    print(ackset)
-    
+    # print(ackset)
   except Exception as e:
     print(e)
 
@@ -114,16 +109,14 @@ def UQueryTruckStatus(truckid):
     query.truckid = truckid
     world_seqnum = amazon.getWorldSeqnum()
     query.seqnum = world_seqnum
-    print(ucommands)
+    
     #send message to world and wait ack
     ackset = world.getAckSet()
     while world_seqnum not in ackset:
       world.sendMsgToWorld(ucommands)
       time.sleep(TIME_WAIT)
       ackset = world.getAckSet()
-    print(ackset)
-
+    # print(ackset)
   except Exception as e:
     print(e)
       
-  

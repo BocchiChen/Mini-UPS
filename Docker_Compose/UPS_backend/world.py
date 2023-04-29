@@ -69,7 +69,7 @@ def sayHelloToWorld(truck_num):
       truck.id = i
       truck.x = 0
       truck.y = 0
-      query = "INSERT INTO trucks (TRUCK_ID, STATUS, WAREHOUSE_ID, POSITION_X, POSITION_Y) VALUES (" + str(i) + ", 'idle', -1, 0, 0);"
+      query = f"""INSERT INTO trucks (TRUCK_ID, STATUS, WAREHOUSE_ID, POSITION_X, POSITION_Y) VALUES ({i}, 'idle', -1, 0, 0);"""
       cur.execute(query)
     database.commitAndClose(dbconn, cur)
     
@@ -150,16 +150,25 @@ def UCompletionHandler(completion):
     print(status)
     
     if status == "IDLE":
-      query = "UPDATE trucks SET STATUS = 'idle', POSITION_X = " + str(x) + ", POSITION_Y = " + str(y) + " WHERE TRUCK_ID = " + str(truckid) + ";"
+      query = f"""UPDATE trucks SET STATUS = 'idle', POSITION_X = {x}, POSITION_Y = {y} WHERE TRUCK_ID = {truckid};"""
       cur.execute(query)
       
     else:
-      query = "UPDATE trucks SET STATUS = 'arrive_warehouse', POSITION_X = " + str(x) + ", POSITION_Y = " + str(y) + " WHERE TRUCK_ID = " + str(truckid) + ";"
+      query = f"""UPDATE trucks SET STATUS = 'arrive_warehouse', POSITION_X = {x}, POSITION_Y = {y} WHERE TRUCK_ID = {truckid};"""
       cur.execute(query)      
       
-      query = "SELECT WAREHOUSE_ID FROM trucks WHERE TRUCK_ID = " + str(truckid) + ";"
+      query = f"""SELECT WAREHOUSE_ID FROM trucks WHERE TRUCK_ID = {truckid};"""
       cur.execute(query)
-      whid = cur.fetchone()[0]
+      wh = cur.fetchone()
+      whid = wh[0]
+
+      #update package status
+      query = f"""SELECT PACKAGE_ID FROM packages WHERE WAREHOUSE_ID = {whid} AND TRUCK_ID = {truckid} AND STATUS = 'truck_en_route_to_warehouse';"""
+      cur.execute(query)
+      packages = cur.fetchall()
+      for p in packages:
+        query2 = f"""UPDATE packages SET STATUS = 'truck_waiting_for_loading' WHERE PACKAGE_ID = {p[0]};"""
+        cur.execute(query2)
       
       ua_messages = ups_amazon_pb2.UAMessages()
       truck = ua_messages.truckArrived.add()
@@ -177,17 +186,14 @@ def UCompletionHandler(completion):
       
     dbconn.commit()
     cur.close()
-    dbconn.close()
   except Exception as e:
     try:
-      if dbconn:
-        dbconn.rollback()
+      dbconn.rollback()
     except Exception as rberr:
       print("Error occurs while rolling back the database: ", rberr)
     print("Error occurs while communicating with the world: ", e)
   finally:
-    if dbconn:
-      dbconn.close()
+    dbconn.close()
 
 #@thread
 def UDeliveredHandler(delivered):
@@ -207,7 +213,7 @@ def UDeliveredHandler(delivered):
     cur = dbconn.cursor()
     
     #update package status
-    query = "UPDATE packages SET STATUS = 'delivered' WHERE PACKAGE_ID = " + str(packageid) + ";"
+    query = f"""UPDATE packages SET STATUS = 'delivered' WHERE PACKAGE_ID = {packageid};"""
     cur.execute(query)
     
     #equip message (##UAMessages)
@@ -227,17 +233,14 @@ def UDeliveredHandler(delivered):
     
     dbconn.commit()
     cur.close()
-    dbconn.close()
   except Exception as e:
     try:
-      if dbconn:
-        dbconn.rollback()
+      dbconn.rollback()
     except Exception as rberr:
       print("Error occurs while rolling back the database: ", rberr)
     print("Error occurs while communicating with the world: ", e)
   finally:
-    if dbconn:
-      dbconn.close()
+    dbconn.close()
 
 #@thread
 def UTruckStatusHandler(truckstatus):
@@ -261,22 +264,19 @@ def UTruckStatusHandler(truckstatus):
     cur = dbconn.cursor()
     
     #update truck status
-    query = "UPDATE trucks SET STATUS = '" + str(status).lower() + "', POSITION_X = " + str(x) + ", POSITION_Y = " + str(y) + " WHERE TRUCK_ID = " + str(truckid) + ";"
+    query = f"""UPDATE trucks SET STATUS = '{status.lower()}', POSITION_X = {x}, POSITION_Y = {y} WHERE TRUCK_ID = {truckid};"""
     cur.execute(query)
     
     dbconn.commit()
     cur.close()
-    dbconn.close()
   except Exception as e:
     try:
-      if dbconn:
-        dbconn.rollback()
+      dbconn.rollback()
     except Exception as rberr:
       print("Error occurs while rolling back the database: ", rberr)
     print("Error occurs while communicating with the world: ", e)
   finally:
-    if dbconn:
-      dbconn.close()
+    dbconn.close()
     
 #@thread
 def UErrHandler(error):
@@ -293,7 +293,7 @@ def UErrHandler(error):
     print(e)
     
 #route world responses with threads (select)
-def worldRespRouter():
+def worldRespRouter(dbconn):
   global world_socket
   global ackset
   global executor

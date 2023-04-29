@@ -155,7 +155,59 @@ def check_package_position(request, nid):
         messages.error(request, e)
         # print(e)
         return redirect('view_all_packages')
+    
+@login_required
+def user_evaluation(request, nid):
+    cur_user = request.user
+    package = Package_Info.objects.get(package_id=nid)
+    ups_acc = UPSAccount.objects.get(user_id=cur_user.id)
+    if request.method == "POST":
+        form = EvaluationForm(request.POST)
+        if form.is_valid():
+            ups_number = form.cleaned_data['ups_number']
+            product = package
+            prod_quality = form.cleaned_data['prod_quality']
+            delivery_quality = form.cleaned_data['delivery_quality']
+            description = form.cleaned_data['description']
+            existed_eva = userEvaluation.objects.get(ups_number=ups_acc.ups_account_number)
+            if existed_eva is None:
+                eva = userEvaluation(ups_number=ups_number, product=product, prod_quality=prod_quality, delivery_quality=delivery_quality, description=description)
+                eva.save()
+            else:
+                existed_eva.prod_quality = prod_quality
+                existed_eva.delivery_quality = delivery_quality
+                existed_eva.description = description
+                existed_eva.save()
+        return redirect('user_view_evaluations')
+    
+    form = EvaluationForm()
+    context = {'form' : form, 'package' : package, 'user' : cur_user, 'ups_acc' : ups_acc}
+    return render(request, "user_evaluation.html", context)
 
+@login_required
+def user_view_evaluations(request):
+    try:
+        cur_user = request.user
+        ups_acc = UPSAccount.objects.filter(user_id=cur_user.id).first()
+        if ups_acc:
+            # get the packages that are owned by this user and in the same world
+            related_evaluations = userEvaluation.objects.filter(ups_number=ups_acc.ups_account_number)
+            eva_dict = {}
+            search_data = request.GET.get('q', "")
+            if search_data:
+                eva_dict["product__package_id__exact"] = search_data
+                related_evaluations = userEvaluation.objects.filter(**eva_dict)
+
+            context = {'evaluations' : related_evaluations, 'ups_acc' : ups_acc, 'search_data' : search_data}
+            return render(request, 'user_view_eva.html', context)
+        else:
+            messages.info(request, f"You are a superuser, so you are not in the database, please check in as a normal user")
+            return redirect('home')
+    except Exception as e:
+        if not search_data.isdigit():
+            messages.error(request, "numbers are only allowed")
+        # print(e)
+        return redirect('user_view_evaluations')
 
 """ 
     guest functions 

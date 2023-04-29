@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-i*%czw6t*o$+j45##p9696vi5-ucvo3x&-*qt$f5w&gm8-thof
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['web', 'vcm-30796.vm.duke.edu', '127.0.0.1:8000', 'localhost:8000', '0.0.0.0:8000']
+ALLOWED_HOSTS = ['web', 'vcm-30796.vm.duke.edu', '127.0.0.1', 'localhost', '0.0.0.0']
 
 
 # Application definition
@@ -84,7 +84,7 @@ DATABASES = {
         'NAME': 'postgres',
         'USER': 'postgres',
         'PASSWORD': 'passw0rd',
-        'HOST': 'db',
+        'HOST': 'localhost',
         'PORT': 5432,
     }
 }

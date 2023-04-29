@@ -37,8 +37,8 @@ def recMsgFromAmazon(amazon_socket):
     
 def sendMsg(socket, data):
   msg = data.SerializeToString()
-  _EncodeVarint(socket.sendall, len(msg), None)
-  socket.sendall(msg)
+  _EncodeVarint(socket.send, len(msg), None)
+  socket.send(msg)
 
 def recMsg(socket):
   raw_data_size = b''
@@ -51,20 +51,3 @@ def recMsg(socket):
         continue
   raw_data_msg = socket.recv(data_size)
   return raw_data_msg
-  '''
-  try:
-    var_int_buff = []
-    while True:
-      buf = socket.recv(1)
-      var_int_buff += buf
-      msg_len, new_pos = _DecodeVarint32(var_int_buff, 0)
-      if new_pos != 0:
-        break
-    whole_message = socket.recv(msg_len)
-    print('in revMsg:', whole_message)
-    return whole_message
-  except:
-    whole_message = socket.recv(MAX_MSG_LEN)
-    print(whole_message)
-    '''
-    

@@ -2,7 +2,7 @@ import socket
 import psycopg2
 from protobuf import world_ups_pb2
 from protobuf import ups_amazon_pb2
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, wait, ALL_COMPLETED
 import threading
 import time
 
@@ -117,7 +117,6 @@ def recvAResponse():
   global amazon_socket
   au_messages = ups_amazon_pb2.AUMessages()
   msg = message.recMsgFromAmazon(amazon_socket)
-  print('inrecvARes:', msg)
   au_messages.ParseFromString(msg)
   return au_messages
   
@@ -157,10 +156,8 @@ def getWorldSeqnum():
     return world_seqnum - 1
 
 #@thread (amazon sends message to ups for creating new package in the database)
-def AOrderHandler(dbconn, deal):
+def AOrderHandler(deal):
   try:
-    print(threading.current_thread().ident)
-    print('in aorder')
     #get basic information
     userid = deal.userid
     packageid = deal.order.id
@@ -171,53 +168,44 @@ def AOrderHandler(dbconn, deal):
     whid = deal.order.whid
     shipid = deal.shipid
     seqnum = deal.seqnum
-    # print(userid, packageid, description, count, dst_x, dst_y)
-    print(deal)
-
+    
     #response amazon with acks
     respAmazonWithACK(seqnum)
     if checkSeqnum(seqnum):
-      print('incheckseq')
       return
     #database cursor
-    # dbconn = database.connectToDB()
-    print('after dbcon start')
+    dbconn = database.connectToDB()
     cur = dbconn.cursor()
-    print('after cursor start')
-    print('userid:', userid)
+    
     #insert order
     if userid == "":
       query = f"""INSERT INTO packages (PACKAGE_ID, STATUS, DESCRIPTION, COUNT, DESTINATION_X, DESTINATION_Y, WAREHOUSE_ID, SHIP_ID, USER_ID, TRUCK_ID) 
                   VALUES ({packageid}, 'created', '{description}', {count}, {dst_x}, {dst_y}, {whid}, {shipid}, NULL, NULL);"""
-      print('query:', query)
       cur.execute(query)
     else:
       #check if userid exists
-      query = "SELECT UPS_ACCOUNT_NUMBER FROM upsaccount WHERE UPS_ACCOUNT_NUMBER = '" + str(userid) + "';"
+      query = f"""SELECT UPS_ACCOUNT_NUMBER FROM upsaccount WHERE UPS_ACCOUNT_NUMBER = '{userid}';"""
       cur.execute(query)
       user = cur.fetchone()
       if user is None:
         err = "error: cannot find the user id: " + str(userid)
+        print(err)
         sendErrMsgToAmazon(err, seqnum, getWorldSeqnum())
         return
-      query = "INSERT INTO packages (PACKAGE_ID, STATUS, DESCRIPTION, COUNT, DESTINATION_X, DESTINATION_Y, WAREHOUSE_ID, SHIP_ID, USER_ID, TRUCK_ID) " 
-      + "VALUES (" + str(packageid) + ", 'created', '" + str(description) + "', " + str(count) + ", " + str(dst_x) + ", " + str(dst_y) + ", " + str(whid) + ", " + str(shipid) + ", '" + str(userid) + "', -1);"
+      query = f"""INSERT INTO packages (PACKAGE_ID, STATUS, DESCRIPTION, COUNT, DESTINATION_X, DESTINATION_Y, WAREHOUSE_ID, SHIP_ID, USER_ID, TRUCK_ID) 
+                  VALUES ({packageid}, 'created', '{description}', {count}, {dst_x}, {dst_y}, {whid}, {shipid}, {userid}, NULL);"""
       cur.execute(query)
     dbconn.commit()
     print("New Amazon package created in UPS database: ", deal)
     cur.close()
-    # dbconn.close()
-    print('after dbcon')
   except Exception as e:
     try:
-      # if dbconn:
       dbconn.rollback()
     except Exception as rberr:
       print("Error occurs while rolling back the database: ", rberr)
     print("Error occurs while communicating with the amazon: ", e)
-  # finally:
-  #   if dbconn:
-  #     dbconn.close()
+  finally:
+    dbconn.close()
 
 #@thread (amazon wants to associate the order within its UPS userid after placing its order)
 def AAssociateIDHandler(assuserid):
@@ -237,31 +225,29 @@ def AAssociateIDHandler(assuserid):
     cur = dbconn.cursor()
     
     #check if userid exists
-    query = "SELECT UPS_ACCOUNT_NUMBER FROM upsaccount WHERE UPS_ACCOUNT_NUMBER = '" + str(userid) + "';"
+    query = f"""SELECT UPS_ACCOUNT_NUMBER FROM upsaccount WHERE UPS_ACCOUNT_NUMBER = '{userid}';"""
     cur.execute(query)
     user = cur.fetchone()
     if user is None:
       err = "error: cannot find the user id: " + str(userid)
+      print(err)
       sendErrMsgToAmazon(err, seqnum, getWorldSeqnum())
       return 
     
     #find package and modify its user_id
-    query = "UPDATE packages SET USER_ID = '" + str(userid) + "' WHERE SHIP_ID = " + str(shipid) + ";"
+    query = f"""UPDATE packages SET USER_ID = '{userid}' WHERE SHIP_ID = {shipid};"""
     cur.execute(query)
     
     dbconn.commit()
     cur.close()
-    dbconn.close()
   except Exception as e:
     try:
-      if dbconn:
-        dbconn.rollback()
+      dbconn.rollback()
     except Exception as rberr:
       print("Error occurs while rolling back the database: ", rberr)
     print("Error occurs while communicating with the amazon: ", e)
   finally:
-    if dbconn:
-      dbconn.close()
+    dbconn.close()
     
 #@thread (amazon call ups to schedule truck)
 def AScheduleTruckHandler(calltruck):
@@ -281,21 +267,36 @@ def AScheduleTruckHandler(calltruck):
     cur = dbconn.cursor()
     
     truckid = 0
+    status = ""
+    original_whid = -1
     with mutex:
       #find available truck (block)
       while True:
-        query = "SELECT TRUCK_ID FROM trucks WHERE STATUS = 'idle' OR STATUS = 'arrive_warehouse' OR STATUS = 'delivering';"
+        query = "SELECT TRUCK_ID, STATUS FROM trucks WHERE STATUS = 'idle' OR STATUS = 'arrive_warehouse' OR STATUS = 'delivering';"
         cur.execute(query)
         truck = cur.fetchone()
         if truck is not None:
           truckid = truck[0]
+          status = truck[1]
           break
-      query = "UPDATE trucks SET STATUS = 'traveling', WAREHOUSE_ID = " + str(whid) + " WHERE TRUCK_ID = " + str(truckid) + ";"
+      query = f"""SELECT WAREHOUSE_ID FROM trucks WHERE TRUCK_ID = {truckid};"""
+      cur.execute(query)
+      original_whid = cur.fetchone()[0]
+      query = f"""UPDATE trucks SET STATUS = 'traveling', WAREHOUSE_ID = {whid} WHERE TRUCK_ID = {truckid};"""
       cur.execute(query)
     
+    #change original waiting for loading package
+    if status == 'arrive_warehouse':
+      query = f"""SELECT PACKAGE_ID FROM packages WHERE WAREHOUSE_ID = {original_whid} AND TRUCK_ID = {truckid};"""
+      cur.execute(query)
+      packs = cur.fetchall()
+      for p in packs:
+        query2 = f"""UPDATE packages SET STATUS = 'created' WHERE PACKAGE_ID = {p[0]};"""
+        cur.execute(query2)
+
     #add packages belonging to the selected truck
     for shipid in shipids:
-      query = "UPDATE packages SET TRUCK_ID = " + str(truckid) + ", STATUS = 'truck_en_route_to_warehouse' WHERE SHIP_ID = " + str(shipid) + ";"
+      query = f"""UPDATE packages SET TRUCK_ID = {truckid}, STATUS = 'truck_en_route_to_warehouse' WHERE SHIP_ID = {shipid};"""
       cur.execute(query)
    
     ucommands = world_ups_pb2.UCommands()
@@ -314,17 +315,14 @@ def AScheduleTruckHandler(calltruck):
     
     dbconn.commit()
     cur.close()
-    dbconn.close()
   except Exception as e:
     try:
-      if dbconn:
-        dbconn.rollback()
+      dbconn.rollback()
     except Exception as rberr:
       print("Error occurs while rolling back the database: ", rberr)
     print("Error occurs while communicating with the amazon: ", e)
   finally:
-    if dbconn:
-      dbconn.close()
+    dbconn.close()
 
 #@thread (amazon send message to update truck status)
 def AUpdateTStatusHandler(updatestatus):
@@ -344,46 +342,44 @@ def AUpdateTStatusHandler(updatestatus):
     cur = dbconn.cursor()
 
     #check if the truckid exists
-    query = "SELECT TRUCK_ID FROM trucks WHERE TRUCK_ID = " + str(truckid) + ";"
+    query = f"""SELECT TRUCK_ID FROM trucks WHERE TRUCK_ID = {truckid};"""
     cur.execute(query)
     truck = cur.fetchone()
     if truck is None:
       err = "error: cannot find the truck id: " + str(truckid)
+      print(err)
       sendErrMsgToAmazon(err, seqnum, getWorldSeqnum())
       return 
     
     #update truck status
-    query = "UPDATE trucks SET STATUS = '" + str(status).lower() + "' WHERE TRUCK_ID = " + str(truckid) + ";" 
+    query = f"""UPDATE trucks SET STATUS = '{status.lower()}' WHERE TRUCK_ID = {truckid};"""
     cur.execute(query)
     
     #update package status
-    query = "SELECT SHIP_ID FROM packages WHERE TRUCK_ID = " + str(truckid) + ";"
+    query = f"""SELECT SHIP_ID FROM packages WHERE TRUCK_ID = {truckid};"""
     cur.execute(query)
     ships = cur.fetchall()
     for ship in ships:
       shipid = ship[0]
       if status == "LOADING":
-        query = "UPDATE packages SET STATUS = 'truck_loading' WHERE SHIP_ID = " + str(shipid) + ";"
+        query = f"""UPDATE packages SET STATUS = 'truck_loading' WHERE SHIP_ID = {shipid};"""
         cur.execute(query)
       else:
-        query = "UPDATE packages SET STATUS = 'truck_loaded' WHERE SHIP_ID = " + str(shipid) + ";"
+        query = f"""UPDATE packages SET STATUS = 'truck_loaded' WHERE SHIP_ID = {shipid};"""
         cur.execute(query)
         
     dbconn.commit()
     cur.close()
-    dbconn.close()
   except Exception as e:
     try:
-      if dbconn:
-        dbconn.rollback()
+      dbconn.rollback()
     except Exception as rberr:
       print("Error occurs while rolling back the database: ", rberr)
     print("Error occurs while communicating with the amazon: ", e)
   finally:
-    if dbconn:
-      dbconn.close()
+    dbconn.close()
 
-#@thread (amazon tell ups to deliver packages, possibly adding more packages to deliver) ?
+#@thread (amazon tell ups to deliver packages, possibly adding more packages to deliver) 
 def ATruckGoDeliverHandler(godeliver):
   try:
     #get basic information
@@ -401,20 +397,22 @@ def ATruckGoDeliverHandler(godeliver):
     cur = dbconn.cursor()
     
     #error message (check valid condition)
-    query = "SELECT TRUCK_ID FROM trucks WHERE TRUCK_ID = " + str(truckid) + " AND (STATUS = 'loaded' OR STATUS = 'delivering');"
+    query = f"""SELECT TRUCK_ID FROM trucks WHERE TRUCK_ID = {truckid} AND (STATUS = 'loaded' OR STATUS = 'delivering');"""
     cur.execute(query)
     truck = cur.fetchone()
     if truck is None:
-      err = "error: cannot find the provided available truck: " + str(truckid)
+      err = f"""error: cannot find the provided available truck: {truckid} status is not loaded or delivering"""
+      print(err)
       sendErrMsgToAmazon(err, seqnum, getWorldSeqnum())
       return 
     
     for shipid in shipids:
-      query = "SELECT STATUS FROM packages WHERE SHIP_ID = " + str(shipid) + ";"
+      query = f"""SELECT STATUS FROM packages WHERE SHIP_ID = {shipid};"""
       cur.execute(query)
       pack = cur.fetchone()
       if pack is None or pack[0] != "truck_loaded":
         err = "error: cannot deliver the provided package: " + str(shipid)
+        print(err)
         sendErrMsgToAmazon(err, seqnum, getWorldSeqnum())
         return 
     
@@ -425,7 +423,7 @@ def ATruckGoDeliverHandler(godeliver):
     for shipid in shipids: 
       package = delivery.packages.add()
       package.packageid = shipid
-      query = "SELECT DESTINATION_X, DESTINATION_Y FROM packages WHERE SHIPID = " + str(shipid) + ";"
+      query = f"""SELECT DESTINATION_X, DESTINATION_Y FROM packages WHERE SHIPID = {shipid};"""
       cur.execute(query)
       p = cur.fetchone()
       package.x = p[0]
@@ -442,11 +440,11 @@ def ATruckGoDeliverHandler(godeliver):
     
     for shipid in shipids:
       #update package status
-      query = "UPDATE packages SET STATUS = 'out_for_delivery' WHERE SHIP_ID = " + str(shipid) + ";"
+      query = f"""UPDATE packages SET STATUS = 'out_for_delivery' WHERE SHIP_ID = {shipid};"""
       cur.execute(query)
     
     #update truck status
-    query = "UPDATE trucks SET STATUS = 'delivering' WHERE TRUCK_ID = " + str(truckid) + ";"
+    query = f"""UPDATE trucks SET STATUS = 'delivering' WHERE TRUCK_ID = {truckid};"""
     cur.execute(query)
     
     #send package update information to amazon (optional)
@@ -470,31 +468,25 @@ def ATruckGoDeliverHandler(godeliver):
       
     dbconn.commit()
     cur.close()
-    dbconn.close()
   except Exception as e:
     try:
-      if dbconn:
-        dbconn.rollback()
+      dbconn.rollback()
     except Exception as rberr:
       print("Error occurs while rolling back the database: ", rberr)
     print("Error occurs while communicating with the amazon: ", e)  
   finally:
-    if dbconn:
-      dbconn.close()
+    dbconn.close()
     
 #route amazon responses with threads
-def amazonRespRouter():
+def amazonRespRouter():#(dbconn):
   global amazon_socket
   global aackset
   global executor
   try:
     au_messages = ups_amazon_pb2.AUMessages()
-    print('init')
     au_messages = recvAResponse()
-    print('recv')
-    dbcon = database.connectToDB()
     for deal in au_messages.order:
-      args = [dbcon, deal]
+      args = [deal]
       task = executor.submit(lambda p: AOrderHandler(*p),args)
     for assuserid in au_messages.associateUserId:
       args = [assuserid]
@@ -511,7 +503,6 @@ def amazonRespRouter():
     for ack in au_messages.acks:
       aackset.add(ack)
   except Exception as e:
-    print(1)
     print(e)
 
 def getAAckSet():

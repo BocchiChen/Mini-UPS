@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="panel panel-default">
+    <!-- Default panel contents -->
+    <div class="panel-heading"><h4>User Evaluation</h4></div>
+
+    <!-- List group -->
+    <div class="panel-body">
+        <form method="POST" novalidate>
+            {% csrf_token %}
+            <div style="width: 1300px; margin-left: 100px;">
+                <label>UPS Number</label>
+                <input type="text" name="ups_number" class="form-control" value="{{ ups_acc.ups_account_number }}" readonly>
+                <input type="hidden" name="ups_number" class="form-control" value="{{ ups_acc.ups_account_number }}">
+
+                <label>Product Quality</label>
+                <select name="prod_quality" class="form-control">
+                    <option value="Terrible">Terrible</option>
+                    <option value="Not great">Not great</option>
+                    <option value="Mediocre">Mediocre</option>
+                    <option value="Good">Good</option>
+                    <option value="Excellent">Excellent</option>
+                    <option value="Outstanding">Outstanding</option>
+                </select>
+                
+                <label>Delivery Quality</label>
+                <select name="delivery_quality" class="form-control">
+                    <option value="Terrible">Terrible</option>
+                    <option value="Not great">Not great</option>
+                    <option value="Mediocre">Mediocre</option>
+                    <option value="Good">Good</option>
+                    <option value="Excellent">Excellent</option>
+                    <option value="Outstanding">Outstanding</option>
+                </select>
+
+                <label>Feedback</label>
+                <input type="text" name="description" placeholder="Please provide any valuable feedback..." class="form-control">
+                <p></p>
+                <input type="submit" value="Save" class="btn btn-primary">
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

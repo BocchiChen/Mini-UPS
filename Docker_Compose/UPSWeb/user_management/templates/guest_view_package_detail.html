@@ -13,6 +13,9 @@
     <li class="list-group-item">Package ID: <strong>{{ package.package_id }}</strong></li>
     <li class="list-group-item">Count: <strong>{{ package.count }}</strong></li>
     <li class="list-group-item">Truck ID: <strong>{{ package.truck.truck_id }}</strong></li>
+    {% if package.truck != NULL %}
+    <li class="list-group-item">Truck Status: <strong>{{ package.truck.status }}</strong></li>
+    {% endif %}
     <li class="list-group-item">Status: <strong>{{ package.status }}</strong></li>
     <li class="list-group-item">Destination X & Y: <strong>{{ package.destination_x }}, {{ package.destination_y }}</strong></li>
     <li class="list-group-item">WareHouse ID: <strong>{{ package.warehouse_id }}</strong></li>

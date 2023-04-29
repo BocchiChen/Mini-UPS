@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import UPSAccount, Package_Info
+from .models import UPSAccount, Package_Info, userEvaluation
 
 class UserRegistrationForm(UserCreationForm):
     username = forms.CharField(max_length=20, error_messages={'max_length':'Length must be within 20', 'required':'username is required'}, 
@@ -39,3 +39,8 @@ class PackageEditForm(forms.ModelForm):
     class Meta:
         model = Package_Info
         fields = ["destination_x", "destination_y"]
+
+class EvaluationForm(forms.ModelForm):
+    class Meta:
+        model = userEvaluation
+        fields = ["ups_number", "prod_quality", "delivery_quality", "description"]
