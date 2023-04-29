@@ -169,7 +169,7 @@ def user_evaluation(request, nid):
             prod_quality = form.cleaned_data['prod_quality']
             delivery_quality = form.cleaned_data['delivery_quality']
             description = form.cleaned_data['description']
-            existed_eva = userEvaluation.objects.get(ups_number=ups_acc.ups_account_number)
+            existed_eva = userEvaluation.objects.filter(ups_number=ups_acc.ups_account_number).first()
             if existed_eva is None:
                 eva = userEvaluation(ups_number=ups_number, product=product, prod_quality=prod_quality, delivery_quality=delivery_quality, description=description)
                 eva.save()

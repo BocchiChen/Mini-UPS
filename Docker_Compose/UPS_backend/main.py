@@ -25,14 +25,13 @@ if __name__ == "__main__":
   print("Starting interacting with world and amazon ...")
     
   amazon_socket = amazon.acceptAConnection() #block
-  #while amazon.getWorldID() is None:
-    #amazon.synchronizeWithAmazon()
-    #time.sleep(1)
+  # while amazon.getWorldID() is None:
+  amazon.synchronizeWithAmazon()
+  print(amazon.getWorldID())
     
-  #connect = False
-  #while connect is False:
-    #connect = world.sayHelloToWorld(TRUCK_NUM)
-    #time.sleep(1)
+  connect = False
+  # while connect is False:
+  connect = world.sayHelloToWorld(TRUCK_NUM)
     
   # dbconn, only for test
   # dbconn = database.connectToDB()

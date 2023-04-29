@@ -11,7 +11,7 @@ import database
 import amazon
 
 #world settings
-WORLD_HOST = 'vcm-30507.vm.duke.edu'
+WORLD_HOST = 'vcm-30796.vm.duke.edu'
 WORLD_PORT = 12345
 
 #time
@@ -147,7 +147,7 @@ def UCompletionHandler(completion):
     dbconn = database.connectToDB()
     cur = dbconn.cursor()
 
-    print(status)
+    print("In Completion Status: ",status)
     
     if status == "IDLE":
       query = f"""UPDATE trucks SET STATUS = 'idle', POSITION_X = {x}, POSITION_Y = {y} WHERE TRUCK_ID = {truckid};"""
@@ -162,12 +162,13 @@ def UCompletionHandler(completion):
       wh = cur.fetchone()
       whid = wh[0]
 
-      #update package status
+      #update package status (added)
       query = f"""SELECT PACKAGE_ID FROM packages WHERE WAREHOUSE_ID = {whid} AND TRUCK_ID = {truckid} AND STATUS = 'truck_en_route_to_warehouse';"""
       cur.execute(query)
       packages = cur.fetchall()
       for p in packages:
-        query2 = f"""UPDATE packages SET STATUS = 'truck_waiting_for_loading' WHERE PACKAGE_ID = {p[0]};"""
+        query2 = f"""UPDATE packages SET STATUS = 'truck_waiting_for_package' WHERE PACKAGE_ID = {p[0]};"""
+        print(query2)
         cur.execute(query2)
       
       ua_messages = ups_amazon_pb2.UAMessages()
@@ -176,6 +177,7 @@ def UCompletionHandler(completion):
       truck.whid = whid
       amazon_seqnum = getASeqnum()
       truck.seqnum = amazon_seqnum
+      print('ua_messages:', ua_messages)
         
       #send message to amazon
       aackset = amazon.getAAckSet()
@@ -189,6 +191,7 @@ def UCompletionHandler(completion):
   except Exception as e:
     try:
       dbconn.rollback()
+      print("Completion rollback")
     except Exception as rberr:
       print("Error occurs while rolling back the database: ", rberr)
     print("Error occurs while communicating with the world: ", e)
@@ -212,9 +215,12 @@ def UDeliveredHandler(delivered):
     dbconn = database.connectToDB()
     cur = dbconn.cursor()
     
+    print("delivered: ", packageid)
     #update package status
-    query = f"""UPDATE packages SET STATUS = 'delivered' WHERE PACKAGE_ID = {packageid};"""
+    query = f"""UPDATE packages SET STATUS = 'delivered' WHERE SHIP_ID = {packageid};"""
+    print(query)
     cur.execute(query)
+    dbconn.commit()
     
     #equip message (##UAMessages)
     ua_messages = ups_amazon_pb2.UAMessages()
@@ -231,7 +237,6 @@ def UDeliveredHandler(delivered):
       time.sleep(TIME_WAIT)
       aackset = amazon.getAAckSet()
     
-    dbconn.commit()
     cur.close()
   except Exception as e:
     try:
@@ -293,7 +298,7 @@ def UErrHandler(error):
     print(e)
     
 #route world responses with threads (select)
-def worldRespRouter(dbconn):
+def worldRespRouter():#(dbconn):
   global world_socket
   global ackset
   global executor
