@@ -5,3 +5,4 @@ google
 threadpool
 protobuf
 crispy-bootstrap3
+protobuf==3.20.*

@@ -44,7 +44,7 @@
         <td>{{ package.status }}</td>
         <td>{{ package.destination_x }}, {{ package.destination_y }}</td>
         <td>
-            {% if package.status != "delivered" %}
+            {% if package.status != "delivered" and package.status != "out_for_delivery" %}
           <a href="/guest/{{ package.package_id }}/edit_package_destination/" class="btn btn-primary active btn-sm"
             role="button">Edit Destination</a>
             {% endif %}

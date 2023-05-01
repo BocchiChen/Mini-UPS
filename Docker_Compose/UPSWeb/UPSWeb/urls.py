@@ -15,25 +15,25 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from user_management.views import *
+from user_management import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', guestHomePage, name='guest_home'),
-    path('user/home', homePage, name='home'),
-    path('register/', registerPage, name="register"),
-    path('login/', loginPage, name="login"),
-    path('logout/', logoutPage, name='logout'),
-    path('user/modify_ups_account/', modify_ups_account, name='modify_ups_account'),
-    path('user/profile/', profilePage, name='user_profile'),
-    path('user/view_all_packages/', view_all_packages, name='view_all_packages'),
-    path('user/<int:nid>/edit_package_destination/', edit_package_desination, name='edit_package_desination'),
-    path('guest/<int:nid>/edit_package_destination/', guest_edit_package_desination, name='guest_edit_package_desination'),
-    path('user/<int:nid>/check_package_position/', check_package_position, name='check_package_position'),
-    path('guest/<int:nid>/check_package_position/', guest_check_package_position, name='guest_check_package_position'),
-    path('user/<int:nid>/view_package_detail/', view_package_detail, name='view_package_detail'),
-    path('guest/view_all_packages/', guest_view_all_packages, name='guest_view_all_packages'),
-    path('guest/<int:nid>/view_package_detail/', guest_view_package_detail, name='guest_view_package_detail'),
-    path('user/<int:nid>/evaluation/', user_evaluation, name='user_evaluation'),
-    path('user/view_evaluation/', user_view_evaluations, name='user_view_evaluations'),
+    path('', views.guestHomePage, name='guest_home'),
+    path('user/home', views.homePage, name='home'),
+    path('register/', views.registerPage, name="register"),
+    path('login/', views.loginPage, name="login"),
+    path('logout/', views.logoutPage, name='logout'),
+    path('user/modify_ups_account/', views.modify_ups_account, name='modify_ups_account'),
+    path('user/profile/', views.profilePage, name='user_profile'),
+    path('user/view_all_packages/', views.view_all_packages, name='view_all_packages'),
+    path('user/<int:nid>/edit_package_destination/', views.edit_package_desination, name='edit_package_desination'),
+    path('guest/<int:nid>/edit_package_destination/', views.guest_edit_package_desination, name='guest_edit_package_desination'),
+    path('user/<int:nid>/check_package_position/', views.check_package_position, name='check_package_position'),
+    path('guest/<int:nid>/check_package_position/', views.guest_check_package_position, name='guest_check_package_position'),
+    path('user/<int:nid>/view_package_detail/', views.view_package_detail, name='view_package_detail'),
+    path('guest/view_all_packages/', views.guest_view_all_packages, name='guest_view_all_packages'),
+    path('guest/<int:nid>/view_package_detail/', views.guest_view_package_detail, name='guest_view_package_detail'),
+    path('user/<int:nid>/evaluation/', views.user_evaluation, name='user_evaluation'),
+    path('user/view_evaluation/', views.user_view_evaluations, name='user_view_evaluations'),
 ]

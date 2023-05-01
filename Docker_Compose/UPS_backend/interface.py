@@ -11,7 +11,7 @@ import amazon
 import database
 
 #net
-INTERFACE_HOST = 'localhost'
+INTERFACE_HOST = '0.0.0.0'
 INTERFACE_PORT = 34568
 BACK_LOG = 100
 
@@ -30,6 +30,7 @@ def acceptFConnection():
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     address = (INTERFACE_HOST, INTERFACE_PORT)
+    print("in interface:", address)
     sock.bind(address)
     sock.listen(BACK_LOG)
     conn = database.connectToDB()
@@ -119,4 +120,3 @@ def UQueryTruckStatus(truckid):
     # print(ackset)
   except Exception as e:
     print(e)
-      

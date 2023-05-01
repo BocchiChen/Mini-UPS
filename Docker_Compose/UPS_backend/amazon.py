@@ -237,7 +237,15 @@ def AAssociateIDHandler(assuserid):
       sendErrMsgToAmazon(err, seqnum, getWorldSeqnum())
       return 
     
-    #find package and modify its user_id
+    #find package and modify its user_id (***)
+    query = f"""SELECT SHIP_ID FROM packages WHERE SHIP_ID = {shipid};"""
+    cur.execute(query)
+    shd = cur.fetchone()
+    while shd is None:
+      query = f"""SELECT SHIP_ID FROM packages WHERE SHIP_ID = {shipid};"""
+      cur.execute(query)
+      shd = cur.fetchone()
+    #associate user id
     query = f"""UPDATE packages SET USER_ID = '{userid}' WHERE SHIP_ID = {shipid};"""
     cur.execute(query)
     
@@ -272,14 +280,21 @@ def AScheduleTruckHandler(calltruck):
     
     truckid = 0
     with mutex:
-      #find available truck (block)
+      #find available truck (block) (***)
       while True:
-        query = "SELECT TRUCK_ID, STATUS FROM trucks WHERE STATUS = 'idle';"
+        query = "SELECT TRUCK_ID FROM trucks WHERE STATUS = 'idle';"
         cur.execute(query)
         truck = cur.fetchone()
         if truck is not None:
           truckid = truck[0]
           break
+        else:
+          query2 = "SELECT TRUCK_ID FROM trucks WHERE STATUS = 'delivering';"
+          cur.execute(query2)
+          truck2 = cur.fetchone()
+          if truck2 is not None:
+            truckid = truck2[0]
+            break
       query = f"""UPDATE trucks SET STATUS = 'traveling', WAREHOUSE_ID = {whid} WHERE TRUCK_ID = {truckid};"""
       cur.execute(query)
 
@@ -320,7 +335,7 @@ def AUpdateTStatusHandler(updatestatus):
     truckid = updatestatus.truckid
     status = updatestatus.status
     seqnum = updatestatus.seqnum
-    print('truckid:', truckid)
+
     #response amazon with acks
     respAmazonWithACK(seqnum)
     if checkSeqnum(seqnum):
@@ -392,13 +407,6 @@ def ATruckGoDeliverHandler(godeliver):
     #database cursor
     dbconn = database.connectToDB()
     cur = dbconn.cursor()
-
-    for shipid in shipids:
-      query = f"""SELECT STATUS FROM packages WHERE SHIP_ID = {shipid};"""
-      cur.execute(query)
-      status = cur.fetchone()[0]
-      if status == 'delivered':
-        return
     
     #error message (check valid condition)
     #check truck status
@@ -444,35 +452,22 @@ def ATruckGoDeliverHandler(godeliver):
       time.sleep(TIME_WAIT)
       ackset = world.getAckSet()
     
+    haveSomethingToSend = False
     for shipid in shipids:
       #update package status
-      query = f"""UPDATE packages SET STATUS = 'out_for_delivery', TRUCK_ID = {truckid} WHERE SHIP_ID = {shipid};"""
+      query = f"""SELECT STATUS FROM packages WHERE SHIP_ID = {shipid};"""
       cur.execute(query)
+      sts = cur.fetchone()[0]
+      if sts != 'delivered':
+        query2 = f"""UPDATE packages SET STATUS = 'out_for_delivery', TRUCK_ID = {truckid} WHERE SHIP_ID = {shipid};"""
+        cur.execute(query2)
+        haveSomethingToSend = True
     
     #update truck status
-    query = f"""UPDATE trucks SET STATUS = 'delivering' WHERE TRUCK_ID = {truckid};"""
-    cur.execute(query)
+    if haveSomethingToSend:
+      query2 = f"""UPDATE trucks SET STATUS = 'delivering' WHERE TRUCK_ID = {truckid};"""
+      cur.execute(query2)
 
-    '''
-    #send package update information to amazon (optional)
-    moniter_seqnum_set = list()
-    ua_messages = ups_amazon_pb2.UAMessages()
-    for shipid in shipids:
-      ps = ua_messages.updatePackageStatus.add()
-      ps.shipid = shipid
-      ps.status = "DELIVERING" 
-      am_seqnum = world.getASeqnum()
-      moniter_seqnum_set.append(am_seqnum)
-      ps.seqnum = am_seqnum
-      
-    #send message to amazon and wait ack
-    sendMsgToAmazon(ua_messages) 
-    time.sleep(TIME_WAIT)
-    for sn in moniter_seqnum_set:
-      while sn not in aackset:
-        sendMsgToAmazon(ua_messages) 
-        time.sleep(TIME_WAIT)
-    '''
     dbconn.commit()
     cur.close()
   except Exception as e:

@@ -36,6 +36,7 @@ services:
       - "9000"
     ports:
        - "34567:34567"
+       - "34568:34568"
     depends_on:
       - db
   nginx:
