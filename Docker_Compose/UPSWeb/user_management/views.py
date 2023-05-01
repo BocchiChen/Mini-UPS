@@ -113,13 +113,14 @@ def edit_package_desination(request, nid):
             form = PackageEditForm(request.POST)
             if form.is_valid():
                 old_package = Package_Info.objects.get(package_id=nid)
-                old_package.destination_x = form.cleaned_data["destination_x"]
-                old_package.destination_y = form.cleaned_data["destination_y"]
-                old_package.save()
-                backend_soc = connectToBackEndServer()
-                msg = f'{old_package.package_id},{old_package.destination_x},{old_package.destination_y}'
-                sendAddrMSgToBackEnd(backend_soc, msg)
-                backend_soc.close()
+                if old_package.status != 'out_for_delivery' and old_package.status != 'delivered':
+                    old_package.destination_x = form.cleaned_data["destination_x"]
+                    old_package.destination_y = form.cleaned_data["destination_y"]
+                    old_package.save()
+                    backend_soc = connectToBackEndServer()
+                    msg = f'{old_package.package_id},{old_package.destination_x},{old_package.destination_y}'
+                    sendAddrMSgToBackEnd(backend_soc, msg)
+                    backend_soc.close()
                 return redirect('view_all_packages')
 
         package = Package_Info.objects.get(package_id=nid)
@@ -169,11 +170,12 @@ def user_evaluation(request, nid):
             prod_quality = form.cleaned_data['prod_quality']
             delivery_quality = form.cleaned_data['delivery_quality']
             description = form.cleaned_data['description']
-            existed_eva = userEvaluation.objects.filter(ups_number=ups_acc.ups_account_number).first()
+            existed_eva = userEvaluation.objects.filter(ups_number=ups_acc.ups_account_number, product__package_id=package.package_id).first()
             if existed_eva is None:
                 eva = userEvaluation(ups_number=ups_number, product=product, prod_quality=prod_quality, delivery_quality=delivery_quality, description=description)
                 eva.save()
             else:
+                existed_eva.product = package
                 existed_eva.prod_quality = prod_quality
                 existed_eva.delivery_quality = delivery_quality
                 existed_eva.description = description

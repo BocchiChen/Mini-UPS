@@ -43,7 +43,7 @@ class Truck(models.Model):
 PSTATUS = (
     ("created", "created"),
     ("truck_en_route_to_warehouse", "truck_en_route_to_warehouse"),
-    ("truck_waiting_for_loading", "truck_waiting_for_loading"),
+    ("truck_waiting_for_package", "truck_waiting_for_package"),
     ("truck_loading", "truck_loading"),
     ("truck_loaded", "truck_loaded"),
     ("out_for_delivery", "out_for_delivery"),

@@ -16,6 +16,7 @@ def connectToFrontend():
   thread = threading.Thread(target = interface.acceptFConnection)
   thread.start()
 
+
 if __name__ == "__main__":
   #connect to world and amazon
   print("Starting UPS Backend ...")
@@ -25,17 +26,13 @@ if __name__ == "__main__":
   print("Starting interacting with world and amazon ...")
     
   amazon_socket = amazon.acceptAConnection() #block
-  # while amazon.getWorldID() is None:
+
+  #while amazon.getWorldID() is None:
   amazon.synchronizeWithAmazon()
-  print(amazon.getWorldID())
-    
-  connect = False
-  # while connect is False:
+  
+  #connect = False
+  #while connect is False:
   connect = world.sayHelloToWorld(TRUCK_NUM)
-    
-  # dbconn, only for test
-  # dbconn = database.connectToDB()
-  # database.clearDB(dbconn)
     
   epoll = select.epoll()
   epoll.register(world_socket.fileno(), select.EPOLLIN)
@@ -46,10 +43,10 @@ if __name__ == "__main__":
       for fileno, event in events:
         if fileno == world_socket.fileno():
           print("Starting processing world socket ...")
-          world.worldRespRouter()#(dbconn)
+          world.worldRespRouter()
         elif fileno == amazon_socket.fileno():
           print("Starting processing amazon socket ...")
-          amazon.amazonRespRouter()#(dbconn)
+          amazon.amazonRespRouter()
   except Exception as e:
     print(e)
   finally:

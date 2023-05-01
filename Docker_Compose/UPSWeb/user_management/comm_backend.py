@@ -1,5 +1,5 @@
 import socket
-INTERFACE_HOST = '0.0.0.0'
+INTERFACE_HOST = 'vcm-30796.vm.duke.edu'
 INTERFACE_PORT = 34568
 
 def connectToBackEndServer():
