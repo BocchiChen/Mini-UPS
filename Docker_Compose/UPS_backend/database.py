@@ -18,9 +18,10 @@ def connectToDB():
 def clearDB(conn):
   try:
     cur = conn.cursor()
-    cur.execute("DELETE FROM upsaccount;")
-    cur.execute("DELETE FROM trucks;")
-    cur.execute("DELETE FROM packages;")
+    cur.execute("truncate table evaluations CASCADE;")
+    cur.execute("truncate table packages CASCADE;")
+    cur.execute("truncate table upsaccount CASCADE;")
+    cur.execute("truncate table trucks CASCADE;")
     conn.commit()
     cur.close()
   except Exception as e:

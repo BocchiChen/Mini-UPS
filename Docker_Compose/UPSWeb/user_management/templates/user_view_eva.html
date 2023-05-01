@@ -13,7 +13,7 @@
     <h4>Package Information</h4>
     <h4 style="color: #0c75d2">UPS Account Number: {{ ups_acc.ups_account_number }}</h4>
     <h4 style="color: cadetblue">Username: {{ request.user.username }}</h4>
-    <h1 style="font-size: small"><i>displaying all packages related with this account</i></h1>
+    <h1 style="font-size: small"><i>displaying all evaluations related with this account</i></h1>
   </div>
   <div style="float: right; width: 800px; margin-top: 10px;">
     <form method="get">
@@ -34,32 +34,21 @@
     <thead>
       <tr>
         <th>Package ID</th>
-        <th>Status</th>
-        <th>Destination X & Y</th>
+        <th>Product Quality</th>
+        <th>Delivery Quality</th>
+        <th>Description</th>
         <th>Operations</th>
       </tr>
     </thead>
     <tbody>
-      {% for package in packages %}
+      {% for evaluation in evaluations %}
       <tr>
-        <td>{{ package.package_id }}</td>
-        <td>{{ package.status }}</td>
-        <td>{{ package.destination_x }}, {{ package.destination_y }}</td>
-        <td>
-            {% if package.status != "delivered" and package.status != "out_for_delivery" %}
-          <a href="/user/{{ package.package_id }}/edit_package_destination/" class="btn btn-primary active btn-sm"
-            role="button">Edit Destination</a>
-            {% endif %}
-            {% if package.status == "out_for_delivery" %}
-          <a href="/user/{{ package.package_id }}/check_package_position/" class="btn btn-success active btn-sm"
-            role="button">Search Position</a>
-            {% endif %}
-          <a href="/user/{{ package.package_id }}/view_package_detail" class="btn btn-info active btn-sm"
-            role="button">Package Detail</a>
-            {% if package.status == "delivered" %}
-          <a href="/user/{{ package.package_id }}/evaluation/" class="btn btn-success active btn-sm"
+        <td>{{ evaluation.product.package_id }}</td>
+        <td>{{ evaluation.prod_quality }}</td>
+        <td>{{ evaluation.delivery_quality }}</td>
+        <td>{{ evaluation.description }}</td>
+        <td><a href="/user/{{ evaluation.product.package_id }}/evaluation/" class="btn btn-primary active btn-sm"
             role="button">Evaluate</a>
-            {% endif %}
         </td>
       </tr>
       {% endfor %}

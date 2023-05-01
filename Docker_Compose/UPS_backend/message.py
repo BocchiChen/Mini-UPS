@@ -1,5 +1,5 @@
 import socket
-from google.protobuf.internal.encoder import _EncodeVarint
+from google.protobuf.internal.encoder import _VarintEncoder
 from google.protobuf.internal.decoder import _DecodeVarint32
 
 #message
@@ -35,23 +35,24 @@ def recMsgFromAmazon(amazon_socket):
   except Exception as e:
     print("Error occurs while receiving the message: ", e)
     
+def processEncode(msg_len):
+    buf = []
+    _VarintEncoder()(buf.append, msg_len, None)
+    return b''.join(buf)
+
 def sendMsg(socket, data):
   msg = data.SerializeToString()
-  _EncodeVarint(socket.sendall, len(msg), None)
-  socket.sendall(msg)
+  message_size = processEncode(len(msg))
+  socket.sendall(message_size + msg)
 
 def recMsg(socket):
-  try:
-    var_int_buff = []
-    while True:
-      buf = socket.recv(1)
-      var_int_buff += buf
-      msg_len, new_pos = _DecodeVarint32(var_int_buff, 0)
-      if new_pos != 0:
+  data_size = b''
+  while True:
+    try:
+        data_size += socket.recv(1)
+        data_size = _DecodeVarint32(data_size, 0)[0]
         break
-    whole_message = socket.recv(msg_len)
-    return whole_message
-  except:
-    whole_message = socket.recv(MAX_MSG_LEN)
-    print(whole_message)
-    
+    except IndexError as e:
+        continue
+  message = socket.recv(data_size)
+  return message

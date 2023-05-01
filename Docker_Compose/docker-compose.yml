@@ -16,6 +16,7 @@ services:
         - ./UPSWeb:/code
       depends_on:
         - db
+
   web:
       build: ./UPSWeb
       user: nobody
@@ -26,6 +27,7 @@ services:
         - "8000"
       depends_on:
         - web-init
+
   ups:
     build: ./UPS_backend
     user: nobody
@@ -33,9 +35,13 @@ services:
     volumes:
       - ./UPS_backend:/code
     expose:
-      - "9000"
+      - "34567"
+    ports:
+       - "34567:34567"
+       - "34568:34568"
     depends_on:
       - db
+
   nginx:
      image: nginx:latest
      ports:

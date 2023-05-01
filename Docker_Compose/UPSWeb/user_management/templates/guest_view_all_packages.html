@@ -45,19 +45,22 @@
         <td>{{ package.destination_x }}, {{ package.destination_y }}</td>
         <td>
             {% if package.status != "delivered" and package.status != "out_for_delivery" %}
-          <a href="/guest/{{ package.package_id }}/edit_package_destination/" class="btn btn-primary active"
+          <a href="/guest/{{ package.package_id }}/edit_package_destination/" class="btn btn-primary active btn-sm"
             role="button">Edit Destination</a>
             {% endif %}
             {% if package.status == "out_for_delivery" %}
-          <a href="/guest/{{ package.package_id }}/check_package_position/" class="btn btn-success active"
+          <a href="/guest/{{ package.package_id }}/check_package_position/" class="btn btn-success active btn-sm"
             role="button">Search Position</a>
             {% endif %}
-          <a href="/guest/{{ package.package_id }}/view_package_detail" class="btn btn-info active"
-            role="button">Detail</a>
+          <a href="/guest/{{ package.package_id }}/view_package_detail" class="btn btn-info active btn-sm"
+            role="button">Package Detail</a>
         </td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
+</div>
+<div class="alert alert-success" style="width: 1000px; height: 50px; margin: auto; text-align: center; font-size: larger;" role="alert">
+  Log in as our member! Provide any valuable feedbacks on our services!
 </div>
 {% endblock %}

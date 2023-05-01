@@ -41,6 +41,7 @@ class Truck(models.Model):
 
     
 PSTATUS = (
+    ("created", "created"),
     ("truck_en_route_to_warehouse", "truck_en_route_to_warehouse"),
     ("truck_waiting_for_loading", "truck_waiting_for_loading"),
     ("truck_loading", "truck_loading"),
@@ -75,3 +76,21 @@ class Package_Info(models.Model):
     class Meta:
         db_table = "packages"
 
+evcChoices = (
+    ("Terrible", "Terrible"),
+    ("Not great", "Not great"),
+    ("Mediocre", "Mediocre"),
+    ("Good", "Good"),
+    ("Excellent", "Excellent"),
+    ("Outstanding", "Outstanding")
+)
+
+class userEvaluation(models.Model):
+    ups_number = models.CharField(max_length=100) # aka ups_account_number
+    product = models.OneToOneField(Package_Info, on_delete=models.CASCADE)
+    prod_quality = models.CharField(max_length=50, choices=evcChoices)
+    delivery_quality = models.CharField(max_length=50, choices=evcChoices)
+    description = models.CharField(max_length=500, null=True, blank=True)
+
+    class Meta:
+        db_table = 'evaluations'
