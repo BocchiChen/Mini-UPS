@@ -11,7 +11,7 @@ from .comm_backend import *
     user function
 """
 
-@login_required
+@login_required(login_url='/login/')
 def homePage(request):
     return render(request, 'home.html')
 
@@ -54,7 +54,7 @@ def logoutPage(request):
     logout(request)
     return redirect('login')
 
-@login_required
+@login_required(login_url='/login/')
 def modify_ups_account(request):
     cur_user = request.user
     if request.method == "POST":
@@ -71,7 +71,7 @@ def modify_ups_account(request):
     form = UPSAccountForm(instance=old_user)
     return render(request, 'modify_ups_account.html', {'form' : form})
 
-@login_required
+@login_required(login_url='/login/')
 def profilePage(request):
     cur_user = request.user
     ups_acc = UPSAccount.objects.filter(user_id=cur_user.id).first()
@@ -81,7 +81,7 @@ def profilePage(request):
         messages.info(request, f"You are a superuser, so you are not in the database, please check in as a normal user")
         return redirect('home')
     
-@login_required
+@login_required(login_url='/login/')
 def view_all_packages(request):
     try:
         cur_user = request.user
@@ -106,7 +106,7 @@ def view_all_packages(request):
         # print(e)
         return redirect('view_all_packages')
 
-@login_required
+@login_required(login_url='/login/')
 def edit_package_desination(request, nid):
     try: 
         if request.method == "POST":
@@ -130,7 +130,7 @@ def edit_package_desination(request, nid):
         # print(e)
         return redirect('view_all_packages')
 
-@login_required
+@login_required(login_url='/login/')
 def view_package_detail(request, nid):
     cur_user = request.user
     ups_acc = UPSAccount.objects.get(user_id=cur_user.id)
@@ -139,7 +139,7 @@ def view_package_detail(request, nid):
     return render(request, "view_package_detail.html", context)
 
 
-@login_required
+@login_required(login_url='/login/')
 def check_package_position(request, nid):
     try:
         package = Package_Info.objects.get(package_id=nid)
@@ -156,7 +156,7 @@ def check_package_position(request, nid):
         # print(e)
         return redirect('view_all_packages')
     
-@login_required
+@login_required(login_url='/login/')
 def user_evaluation(request, nid):
     cur_user = request.user
     package = Package_Info.objects.get(package_id=nid)
@@ -184,7 +184,7 @@ def user_evaluation(request, nid):
     context = {'form' : form, 'package' : package, 'user' : cur_user, 'ups_acc' : ups_acc}
     return render(request, "user_evaluation.html", context)
 
-@login_required
+@login_required(login_url='/login/')
 def user_view_evaluations(request):
     try:
         cur_user = request.user

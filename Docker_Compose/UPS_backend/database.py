@@ -8,7 +8,7 @@ def connectToDB():
   try:
     print('before dbcon create')
     conn = psycopg2.connect(
-    host = 'localhost',
+    host = 'db',
     port = 5432,
     database = 'postgres',
     user = 'postgres',
