@@ -225,14 +225,15 @@ def guest_edit_package_desination(request, nid):
             form = PackageEditForm(request.POST)
             if form.is_valid():
                 old_package = Package_Info.objects.get(package_id=nid)
-                old_package.destination_x = form.cleaned_data["destination_x"]
-                old_package.destination_y = form.cleaned_data["destination_y"]
-                old_package.save()
-                backend_soc = connectToBackEndServer()
-                msg = f'{old_package.package_id},{old_package.destination_x},{old_package.destination_y}'
-                sendAddrMSgToBackEnd(backend_soc, msg)
-                backend_soc.close()
-                return redirect('guest_view_all_packages')
+                if old_package.status != 'out_for_delivery' and old_package.status != 'delivered':
+                    old_package.destination_x = form.cleaned_data["destination_x"]
+                    old_package.destination_y = form.cleaned_data["destination_y"]
+                    old_package.save()
+                    backend_soc = connectToBackEndServer()
+                    msg = f'{old_package.package_id},{old_package.destination_x},{old_package.destination_y}'
+                    sendAddrMSgToBackEnd(backend_soc, msg)
+                    backend_soc.close()
+                return redirect('view_all_packages')
 
         package = Package_Info.objects.get(package_id=nid)
         form = PackageEditForm(instance=package)
