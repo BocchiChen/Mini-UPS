@@ -1,0 +1,18 @@
+Uncertain Waiting Time for Unacknowledged Messages:
+	The long waiting time may limit the efficiency of the server while the short waiting time may cause resource consumption.
+
+
+Ungraceful Disconnection with Amazon Server:
+	Epoll does not gracefully handle the situation when the amazon server disconnects with out UPS server. The corresponding socket will be activated at disconnection.
+
+
+Package Information Integrity:
+	Guest can continuously try package id to get others package information and so can temper with that. To prevent this, maybe an identification authentication for every modification on package information is necessary.
+
+
+Unexpected Tranformation of Last Pacakge Status:
+	After delivering the package, the world will notify UPS and so the package status will be updated to 'delivered'. However, aftering changing to 'delivered' for a while, the status of that package may change to 'out_for_delivery' again but the truck will still keep 'idle'.
+
+
+Potential Race Contention:
+	In normal condition, we guarantee that we will use different trucks to pick up packages and packages' status will be sequentially updated, therefore, we do not use threading lock, which will improve our performance. However, at high concurrency, the lack of threading lock may cause some unexpected behaviors.
